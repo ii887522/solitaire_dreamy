@@ -1,7 +1,9 @@
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:simple_shadow/simple_shadow.dart';
+import 'package:solitaire_dreamy/games/klondike_game.dart';
 
 class KlondikePage extends StatelessWidget {
   const KlondikePage({super.key});
@@ -34,7 +36,8 @@ class KlondikePage extends StatelessWidget {
             'assets/images/wallpaper.jpg',
             fit: BoxFit.cover,
             height: double.infinity,
-          )
+          ),
+          const GameWidget.controlled(gameFactory: KlondikeGame.new),
         ],
       ),
       bottomNavigationBar: SimpleShadow(
