@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:solitaire_dreamy/pages/klondike_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -8,6 +9,8 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Solitaire Dreamy',
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         useMaterial3: true,
         appBarTheme: AppBarTheme.of(context).copyWith(

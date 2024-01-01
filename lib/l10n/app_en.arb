@@ -1,0 +1,8 @@
+{
+    "@@locale": "en",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "HARD",
+    "moves": "Moves",
+    "timeTaken": "Time taken"
+}

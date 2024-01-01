@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:simple_shadow/simple_shadow.dart';
 
@@ -7,6 +8,8 @@ class KlondikePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFDFFF),
@@ -17,9 +20,12 @@ class KlondikePage extends StatelessWidget {
           },
         ),
         title: const Text('Klondike'),
-        actions: const [
-          Text('Easy', style: TextStyle(color: Color(0xFF008000))),
-          SizedBox(width: 16)
+        actions: [
+          Text(
+            localizations.easy,
+            style: const TextStyle(color: Color(0xFF008000)),
+          ),
+          const SizedBox(width: 16)
         ],
       ),
       body: Stack(
@@ -44,7 +50,7 @@ class KlondikePage extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 'assets/images/move_item.svg',
-                semanticsLabel: 'Moves',
+                semanticsLabel: localizations.moves,
                 width: 32,
                 height: 32,
                 colorFilter: const ColorFilter.mode(
@@ -61,9 +67,9 @@ class KlondikePage extends StatelessWidget {
                       ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.schedule,
-                semanticLabel: 'Time taken',
+                semanticLabel: localizations.timeTaken,
                 size: 32,
                 color: Colors.white,
               ),
