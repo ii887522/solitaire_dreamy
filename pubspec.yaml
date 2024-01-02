@@ -79,3 +79,21 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+icons_launcher:
+  image_path: assets/images/favicon.png
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true
+      image_path: assets/images/favicon.jpg
+    web:
+      enable: true
+      favicon_path: assets/images/favicon.png
+    macos:
+      enable: true
+    windows:
+      enable: true
+    linux:
+      enable: true
