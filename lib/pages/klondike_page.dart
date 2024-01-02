@@ -5,8 +5,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:simple_shadow/simple_shadow.dart';
 import 'package:solitaire_dreamy/games/klondike_game.dart';
 
-class KlondikePage extends StatelessWidget {
+enum Difficulty { easy, medium, hard }
+
+class KlondikePage extends StatefulWidget {
   const KlondikePage({super.key});
+
+  @override
+  State<KlondikePage> createState() => _KlondikePageState();
+}
+
+class _KlondikePageState extends State<KlondikePage> {
+  var difficulty = Difficulty.easy;
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +32,45 @@ class KlondikePage extends StatelessWidget {
         ),
         title: const Text('Klondike'),
         actions: [
-          Text(
-            localizations.easy,
-            style: const TextStyle(color: Color(0xFF008000)),
-          ),
+          if (difficulty == Difficulty.easy)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.mood),
+              label: Text(localizations.easy),
+              onPressed: () => setState(() => difficulty = Difficulty.medium),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF008000),
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+              ),
+            )
+          else if (difficulty == Difficulty.medium)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.sentiment_neutral),
+              label: Text(localizations.medium),
+              onPressed: () => setState(() => difficulty = Difficulty.hard),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE57300),
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+              ),
+            )
+          else
+            ElevatedButton.icon(
+              icon: const Icon(Icons.mood_bad),
+              label: Text(localizations.hard),
+              onPressed: () => setState(() => difficulty = Difficulty.easy),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF0000),
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+              ),
+            ),
           const SizedBox(width: 16)
         ],
       ),
