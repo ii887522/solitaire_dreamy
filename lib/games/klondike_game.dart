@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flame/components.dart';
+import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
 import 'package:flame_svg/flame_svg.dart';
 import 'package:flutter/material.dart';
+import 'package:solitaire_dreamy/components/shadow_component.dart';
 
 final _worldSize = Vector2(360, 422);
 
@@ -21,6 +23,9 @@ class KlondikeGame extends FlameGame {
     // Assume that the world components are defined in the boundary
     final world = findByKey<PositionComponent>(_worldKey);
 
+    // Expand the game world to fill as much space as possible inside the window
+    // or screen while maintaining the game world aspect ratio calculated from
+    // _worldSize
     world?.scale = Vector2.all(
       camera.viewport.size.x / camera.viewport.size.y <
               _worldSize.x / _worldSize.y
@@ -28,6 +33,7 @@ class KlondikeGame extends FlameGame {
           : camera.viewport.size.y / _worldSize.y,
     );
 
+    // Position the game world at the top center
     world?.position = Vector2(
       (max(camera.viewport.size.x, _worldSize.x * world.scale.x) -
               _worldSize.x * world.scale.x) *
@@ -43,6 +49,9 @@ class KlondikeGame extends FlameGame {
     final cardGap = Vector2(5, 10);
     final cardSize = Vector2(46, 70);
     final suitSize = Vector2.all(40);
+    final cardPlaceholderPositionOffset = Vector2.all(1);
+    final cardPlaceholderSizeOffset = -Vector2(1.5, 2);
+    const cardBorderRadius = 4.0;
 
     final cardPlaceholderPaint = Paint()
       ..color = const Color(0xFF804080)
@@ -65,8 +74,8 @@ class KlondikeGame extends FlameGame {
         children: [
           // StockPile
           RectangleComponent(
-            position: beginCardGap,
-            size: cardSize,
+            position: beginCardGap + cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
@@ -76,18 +85,45 @@ class KlondikeGame extends FlameGame {
             size: Vector2.all(32),
             paint: cardPlaceholderIconPaint,
           ),
+          ShadowComponent(
+            position: beginCardGap,
+            size: cardSize,
+            borderRadius: cardBorderRadius,
+            children: [
+              ClipComponent(
+                size: cardSize,
+                builder: (size) {
+                  return RoundedRectangle.fromPoints(
+                    Vector2.zero(),
+                    size,
+                    cardBorderRadius,
+                  );
+                },
+                children: [
+                  SpriteComponent(
+                    sprite: await Sprite.load('card_back.jpg'),
+                    size: cardSize,
+                  ),
+                ],
+              ),
+            ],
+          ),
 
           // WastePile
           RectangleComponent(
-            position: beginCardGap + Vector2(cardSize.x + cardGap.x, 0),
-            size: cardSize,
+            position: beginCardGap +
+                Vector2(cardSize.x + cardGap.x, 0) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
 
           // FoundationPileSpade
           RectangleComponent(
-            position: beginCardGap + Vector2(cardSize.x * 3 + cardGap.x * 3, 0),
-            size: cardSize,
+            position: beginCardGap +
+                Vector2(cardSize.x * 3 + cardGap.x * 3, 0) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
@@ -102,8 +138,10 @@ class KlondikeGame extends FlameGame {
 
           // FoundationPileHeart
           RectangleComponent(
-            position: beginCardGap + Vector2(cardSize.x * 4 + cardGap.x * 4, 0),
-            size: cardSize,
+            position: beginCardGap +
+                Vector2(cardSize.x * 4 + cardGap.x * 4, 0) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
@@ -118,8 +156,10 @@ class KlondikeGame extends FlameGame {
 
           // FoundationPileClub
           RectangleComponent(
-            position: beginCardGap + Vector2(cardSize.x * 5 + cardGap.x * 5, 0),
-            size: cardSize,
+            position: beginCardGap +
+                Vector2(cardSize.x * 5 + cardGap.x * 5, 0) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
@@ -134,8 +174,10 @@ class KlondikeGame extends FlameGame {
 
           // FoundationPileDiamond
           RectangleComponent(
-            position: beginCardGap + Vector2(cardSize.x * 6 + cardGap.x * 6, 0),
-            size: cardSize,
+            position: beginCardGap +
+                Vector2(cardSize.x * 6 + cardGap.x * 6, 0) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
@@ -150,8 +192,10 @@ class KlondikeGame extends FlameGame {
 
           // TableauPile1
           RectangleComponent(
-            position: beginCardGap + Vector2(0, cardSize.y + cardGap.y),
-            size: cardSize,
+            position: beginCardGap +
+                Vector2(0, cardSize.y + cardGap.y) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
@@ -166,8 +210,9 @@ class KlondikeGame extends FlameGame {
           // TableauPile2
           RectangleComponent(
             position: beginCardGap +
-                Vector2(cardSize.x + cardGap.x, cardSize.y + cardGap.y),
-            size: cardSize,
+                Vector2(cardSize.x + cardGap.x, cardSize.y + cardGap.y) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
@@ -182,8 +227,12 @@ class KlondikeGame extends FlameGame {
           // TableauPile3
           RectangleComponent(
             position: beginCardGap +
-                Vector2(cardSize.x * 2 + cardGap.x * 2, cardSize.y + cardGap.y),
-            size: cardSize,
+                Vector2(
+                  cardSize.x * 2 + cardGap.x * 2,
+                  cardSize.y + cardGap.y,
+                ) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
@@ -201,8 +250,12 @@ class KlondikeGame extends FlameGame {
           // TableauPile4
           RectangleComponent(
             position: beginCardGap +
-                Vector2(cardSize.x * 3 + cardGap.x * 3, cardSize.y + cardGap.y),
-            size: cardSize,
+                Vector2(
+                  cardSize.x * 3 + cardGap.x * 3,
+                  cardSize.y + cardGap.y,
+                ) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
@@ -220,8 +273,12 @@ class KlondikeGame extends FlameGame {
           // TableauPile5
           RectangleComponent(
             position: beginCardGap +
-                Vector2(cardSize.x * 4 + cardGap.x * 4, cardSize.y + cardGap.y),
-            size: cardSize,
+                Vector2(
+                  cardSize.x * 4 + cardGap.x * 4,
+                  cardSize.y + cardGap.y,
+                ) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
@@ -239,8 +296,12 @@ class KlondikeGame extends FlameGame {
           // TableauPile6
           RectangleComponent(
             position: beginCardGap +
-                Vector2(cardSize.x * 5 + cardGap.x * 5, cardSize.y + cardGap.y),
-            size: cardSize,
+                Vector2(
+                  cardSize.x * 5 + cardGap.x * 5 + 1,
+                  cardSize.y + cardGap.y + 1,
+                ) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
@@ -258,8 +319,12 @@ class KlondikeGame extends FlameGame {
           // TableauPile7
           RectangleComponent(
             position: beginCardGap +
-                Vector2(cardSize.x * 6 + cardGap.x * 6, cardSize.y + cardGap.y),
-            size: cardSize,
+                Vector2(
+                  cardSize.x * 6 + cardGap.x * 6,
+                  cardSize.y + cardGap.y,
+                ) +
+                cardPlaceholderPositionOffset,
+            size: cardSize + cardPlaceholderSizeOffset,
             paint: cardPlaceholderPaint,
           ),
           TextComponent(
