@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="solitaire_dreamy"
+        android:label="Solitaire Dreamy"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
