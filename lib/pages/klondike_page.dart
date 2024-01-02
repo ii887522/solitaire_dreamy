@@ -53,7 +53,7 @@ class KlondikePage extends StatelessWidget {
           child: Row(
             children: [
               SvgPicture.asset(
-                'assets/images/move_item.svg',
+                'assets/icons/move_item.svg',
                 semanticsLabel: localizations.moves,
                 width: 32,
                 height: 32,

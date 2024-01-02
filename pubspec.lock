@@ -73,6 +73,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.13.1"
+  flame_svg:
+    dependency: "direct main"
+    description:
+      name: flame_svg
+      sha256: e12ce074d46f4ff5f97830f4f8d9c04040b634b1b2af25847bf174403e1e1232
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.8.8"
   flutter:
     dependency: "direct main"
     description: flutter
