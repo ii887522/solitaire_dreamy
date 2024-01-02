@@ -35,6 +35,7 @@ class KlondikePage extends StatelessWidget {
           Image.asset(
             'assets/images/wallpaper.jpg',
             fit: BoxFit.cover,
+            width: double.infinity,
             height: double.infinity,
           ),
           const GameWidget.controlled(gameFactory: KlondikeGame.new),
