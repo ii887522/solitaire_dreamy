@@ -46,11 +46,13 @@ class KlondikeGame extends FlameGame {
   @override
   FutureOr<void> onLoad() async {
     camera.viewfinder.anchor = Anchor.topLeft;
+
+    // Configuration
     final beginCardGap = Vector2(4, 10);
     final cardGap = Vector2(5, 10);
     final cardSize = Vector2(46, 70);
     final suitSize = Vector2.all(40);
-    final cardPlaceholderPositionOffset = Vector2(0.5, 1);
+    final cardPlaceholderPositionOffset = Vector2(0.75, 1);
     final cardPlaceholderSizeOffset = -Vector2(1.5, 2);
     const cardBorderRadius = 4.0;
 
@@ -69,6 +71,9 @@ class KlondikeGame extends FlameGame {
     final cardPlaceholderTextPaint = TextPaint(
       style: const TextStyle(fontSize: 48, color: Color(0xFF804080)),
     );
+
+    // Component keys
+    final tableauCardKeys = List.generate(29, (index) => ComponentKey.unique());
 
     world.add(
       PositionComponent(
@@ -323,8 +328,55 @@ class KlondikeGame extends FlameGame {
             textRenderer: cardPlaceholderTextPaint,
           ),
 
-          // Standard 52 playing cards
-          for (var i = 0; i < 52; ++i)
+          // Lays out 28 cards into the tableau piles
+          for (var i = 0; i < 7; ++i)
+            for (var j = i; j < 7; ++j)
+              ShadowComponent(
+                key: tableauCardKeys[28 - ((7 - i) * (8 - i) >> 1) + j - i],
+                position: beginCardGap,
+                size: cardSize,
+                borderRadius: cardBorderRadius,
+                isEnabled: j == 0,
+                children: [
+                  ClipComponent(
+                    size: cardSize,
+                    builder: (size) {
+                      return RoundedRectangle.fromPoints(
+                        Vector2.zero(),
+                        size,
+                        cardBorderRadius,
+                      );
+                    },
+                    children: [
+                      SpriteComponent(
+                        sprite: await Sprite.load('card_back.jpg'),
+                        size: cardSize,
+                        paint: Paint()..filterQuality = FilterQuality.low,
+                      ),
+                    ],
+                  ),
+                  MoveEffect.to(
+                    beginCardGap +
+                        Vector2(
+                          j * (cardSize.x + cardGap.x),
+                          cardSize.y + cardGap.y + i * 14,
+                        ),
+                    EffectController(
+                      duration: 0.05,
+                      startDelay: (28 - ((7 - i) * (8 - i) >> 1) + j - i) * 0.1,
+                    ),
+                    onComplete: () {
+                      findByKey<ShadowComponent>(
+                        tableauCardKeys[
+                            28 - ((7 - i) * (8 - i) >> 1) + j - i + 1],
+                      )?.isEnabled = true;
+                    },
+                  ),
+                ],
+              ),
+
+          // Remaining 24 cards stay in the stock pile
+          for (var i = 0; i < 24; ++i)
             ClipComponent(
               position: beginCardGap,
               size: cardSize,
@@ -341,10 +393,6 @@ class KlondikeGame extends FlameGame {
                   size: cardSize,
                   paint: Paint()..filterQuality = FilterQuality.low,
                 ),
-                // MoveEffect.to(
-                //   beginCardGap + Vector2(0, cardSize.y + cardGap.y),
-                //   EffectController(duration: 0.25),
-                // ),
               ],
             ),
         ],

@@ -2,11 +2,14 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 class ShadowComponent extends PositionComponent {
+  bool isEnabled;
   final double borderRadius;
   final Color color;
   final double elevation;
 
   ShadowComponent({
+    super.key,
+    this.isEnabled = true,
     super.position,
     super.size,
     this.borderRadius = 0,
@@ -17,6 +20,8 @@ class ShadowComponent extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
+    if (!isEnabled) return;
+
     for (var i = 0; i < 2; ++i) {
       canvas.drawShadow(
         Path()
