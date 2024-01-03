@@ -17,32 +17,19 @@ class ShadowComponent extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
-    const position = Offset(0, -4);
-
-    canvas.drawShadow(
-      Path()
-        ..addRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromPoints(position, size.toOffset()),
-            Radius.circular(borderRadius),
+    for (var i = 0; i < 2; ++i) {
+      canvas.drawShadow(
+        Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromPoints(const Offset(0, -3), size.toOffset()),
+              Radius.circular(borderRadius),
+            ),
           ),
-        ),
-      color,
-      elevation,
-      false,
-    );
-
-    canvas.drawShadow(
-      Path()
-        ..addRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromPoints(position, size.toOffset()),
-            Radius.circular(borderRadius),
-          ),
-        ),
-      color,
-      elevation,
-      false,
-    );
+        color,
+        elevation,
+        false,
+      );
+    }
   }
 }

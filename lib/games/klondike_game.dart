@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
 import 'package:flame_svg/flame_svg.dart';
@@ -49,7 +50,7 @@ class KlondikeGame extends FlameGame {
     final cardGap = Vector2(5, 10);
     final cardSize = Vector2(46, 70);
     final suitSize = Vector2.all(40);
-    final cardPlaceholderPositionOffset = Vector2.all(1);
+    final cardPlaceholderPositionOffset = Vector2(0.5, 1);
     final cardPlaceholderSizeOffset = -Vector2(1.5, 2);
     const cardBorderRadius = 4.0;
 
@@ -62,7 +63,8 @@ class KlondikeGame extends FlameGame {
       ..colorFilter = const ColorFilter.mode(
         Color(0xFF804080),
         BlendMode.srcIn,
-      );
+      )
+      ..filterQuality = FilterQuality.low;
 
     final cardPlaceholderTextPaint = TextPaint(
       style: const TextStyle(fontSize: 48, color: Color(0xFF804080)),
@@ -79,7 +81,7 @@ class KlondikeGame extends FlameGame {
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
-            svg: await Svg.load('icons/redo.svg'),
+            svg: await Svg.load('icons/redo.svg', pixelRatio: 4),
             anchor: Anchor.center,
             position: beginCardGap + cardSize * 0.5,
             size: Vector2.all(32),
@@ -89,24 +91,6 @@ class KlondikeGame extends FlameGame {
             position: beginCardGap,
             size: cardSize,
             borderRadius: cardBorderRadius,
-            children: [
-              ClipComponent(
-                size: cardSize,
-                builder: (size) {
-                  return RoundedRectangle.fromPoints(
-                    Vector2.zero(),
-                    size,
-                    cardBorderRadius,
-                  );
-                },
-                children: [
-                  SpriteComponent(
-                    sprite: await Sprite.load('card_back.jpg'),
-                    size: cardSize,
-                  ),
-                ],
-              ),
-            ],
           ),
 
           // WastePile
@@ -127,7 +111,7 @@ class KlondikeGame extends FlameGame {
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
-            svg: await Svg.load('icons/spade.svg'),
+            svg: await Svg.load('icons/spade.svg', pixelRatio: 4),
             anchor: Anchor.center,
             position: beginCardGap +
                 Vector2(cardSize.x * 3 + cardGap.x * 3, 0) +
@@ -145,7 +129,7 @@ class KlondikeGame extends FlameGame {
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
-            svg: await Svg.load('icons/heart.svg'),
+            svg: await Svg.load('icons/heart.svg', pixelRatio: 4),
             anchor: Anchor.center,
             position: beginCardGap +
                 Vector2(cardSize.x * 4 + cardGap.x * 4, 0) +
@@ -163,7 +147,7 @@ class KlondikeGame extends FlameGame {
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
-            svg: await Svg.load('icons/club.svg'),
+            svg: await Svg.load('icons/club.svg', pixelRatio: 4),
             anchor: Anchor.center,
             position: beginCardGap +
                 Vector2(cardSize.x * 5 + cardGap.x * 5, 0) +
@@ -181,7 +165,7 @@ class KlondikeGame extends FlameGame {
             paint: cardPlaceholderPaint,
           ),
           SvgComponent(
-            svg: await Svg.load('icons/diamond.svg'),
+            svg: await Svg.load('icons/diamond.svg', pixelRatio: 4),
             anchor: Anchor.center,
             position: beginCardGap +
                 Vector2(cardSize.x * 6 + cardGap.x * 6, 0) +
@@ -297,8 +281,8 @@ class KlondikeGame extends FlameGame {
           RectangleComponent(
             position: beginCardGap +
                 Vector2(
-                  cardSize.x * 5 + cardGap.x * 5 + 1,
-                  cardSize.y + cardGap.y + 1,
+                  cardSize.x * 5 + cardGap.x * 5,
+                  cardSize.y + cardGap.y,
                 ) +
                 cardPlaceholderPositionOffset,
             size: cardSize + cardPlaceholderSizeOffset,
@@ -338,6 +322,31 @@ class KlondikeGame extends FlameGame {
                 cardSize * 0.5,
             textRenderer: cardPlaceholderTextPaint,
           ),
+
+          // Standard 52 playing cards
+          for (var i = 0; i < 52; ++i)
+            ClipComponent(
+              position: beginCardGap,
+              size: cardSize,
+              builder: (size) {
+                return RoundedRectangle.fromPoints(
+                  Vector2.zero(),
+                  size,
+                  cardBorderRadius,
+                );
+              },
+              children: [
+                SpriteComponent(
+                  sprite: await Sprite.load('card_back.jpg'),
+                  size: cardSize,
+                  paint: Paint()..filterQuality = FilterQuality.low,
+                ),
+                // MoveEffect.to(
+                //   beginCardGap + Vector2(0, cardSize.y + cardGap.y),
+                //   EffectController(duration: 0.25),
+                // ),
+              ],
+            ),
         ],
       ),
     );
