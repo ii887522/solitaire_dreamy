@@ -23,10 +23,6 @@ final cardPlaceholderIconPaint = Paint()
   )
   ..filterQuality = FilterQuality.low;
 
-final cardPlaceholderTextPaint = TextPaint(
-  style: const TextStyle(fontSize: 48, color: Color(0xFF804080)),
-);
-
 const initialTableauRowCount = 7;
 const initialTableauColCount = 7;
 

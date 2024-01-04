@@ -11,6 +11,8 @@ import 'package:solitaire_dreamy/components/stock_pile.dart';
 import 'package:solitaire_dreamy/components/tableau.dart';
 import 'package:solitaire_dreamy/components/waste_pile.dart';
 import 'package:solitaire_dreamy/consts/index.dart';
+import 'package:solitaire_dreamy/models/poker_card_model.dart';
+import 'package:solitaire_dreamy/models/suit.dart';
 
 class KlondikeGame extends FlameGame {
   final _worldKey = ComponentKey.unique();
@@ -58,6 +60,15 @@ class KlondikeGame extends FlameGame {
   FutureOr<void> onLoad() async {
     camera.viewfinder.anchor = Anchor.topLeft;
 
+    // Shuffle a standard 52-card deck
+    final pokerCardModels = [
+      for (final suit in Suit.values)
+        for (var rank = 1; rank <= 13; ++rank)
+          PokerCardModel(suit: suit, rank: rank)
+    ];
+
+    pokerCardModels.shuffle();
+
     world.addAll([
       PositionComponent(
         key: _worldKey,
@@ -85,11 +96,14 @@ class KlondikeGame extends FlameGame {
                   key: _initialTableauCardKeys[index],
                   shadowKey: _tableauCardShadowKeys[index],
                   hasShadow: colIndex == 0,
+                  model: pokerCardModels.removeLast(),
                 );
               }(),
 
           // Remaining 24 cards stay in the stock pile
-          for (var i = 0; i < 24; ++i) PokerCard(),
+          ...pokerCardModels.map(
+            (pokerCardModel) => PokerCard(model: pokerCardModel),
+          ),
         ],
       ),
 
@@ -118,7 +132,13 @@ class KlondikeGame extends FlameGame {
         colIndex -
         rowIndex;
 
-    findByKey<PokerCard>(_initialTableauCardKeys[index])?.add(
+    final initialTableauCard = findByKey<PokerCard>(
+      _initialTableauCardKeys[index],
+    );
+
+    initialTableauCard?.priority = rowIndex + 1;
+
+    initialTableauCard?.add(
       MoveEffect.by(
         Vector2(
           colIndex * (cardSize.x + cardGap.x),

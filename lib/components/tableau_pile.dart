@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flame/components.dart';
+import 'package:flutter/material.dart';
 import 'package:solitaire_dreamy/consts/index.dart';
 
 class TableauPile extends PositionComponent {
@@ -17,7 +18,9 @@ class TableauPile extends PositionComponent {
         text: 'K',
         anchor: Anchor.center,
         position: cardSize * 0.5,
-        textRenderer: cardPlaceholderTextPaint,
+        textRenderer: TextPaint(
+          style: const TextStyle(fontSize: 48, color: Color(0xFF804080)),
+        ),
       ),
     ]);
   }
