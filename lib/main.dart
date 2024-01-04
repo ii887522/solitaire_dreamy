@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:solitaire_dreamy/app.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -23,6 +23,6 @@ void main() async {
     );
   }
 
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await Flame.device.setPortrait();
   runApp(const App());
 }

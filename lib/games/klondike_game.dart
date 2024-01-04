@@ -4,7 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:solitaire_dreamy/components/card_back.dart';
+import 'package:solitaire_dreamy/components/poker_card.dart';
 import 'package:solitaire_dreamy/components/common/shadow_component.dart';
 import 'package:solitaire_dreamy/components/foundation.dart';
 import 'package:solitaire_dreamy/components/stock_pile.dart';
@@ -14,7 +14,16 @@ import 'package:solitaire_dreamy/consts/index.dart';
 
 class KlondikeGame extends FlameGame {
   final _worldKey = ComponentKey.unique();
-  var _isIniting = true;
+
+  final _initialTableauCardKeys = List.generate(
+    initialTableauCardCount,
+    (index) => ComponentKey.unique(),
+  );
+
+  final _tableauCardShadowKeys = List.generate(
+    initialTableauCardCount + 1,
+    (index) => ComponentKey.unique(),
+  );
 
   @override
   Color backgroundColor() => Colors.transparent;
@@ -49,15 +58,7 @@ class KlondikeGame extends FlameGame {
   FutureOr<void> onLoad() async {
     camera.viewfinder.anchor = Anchor.topLeft;
 
-    // Configuration
-    const initialTableauRowCount = 7;
-    const initialTableauColCount = 7;
-    const cardStackGutter = 14;
-
-    // Component keys
-    final tableauCardKeys = List.generate(29, (index) => ComponentKey.unique());
-
-    world.add(
+    world.addAll([
       PositionComponent(
         key: _worldKey,
         children: [
@@ -66,68 +67,97 @@ class KlondikeGame extends FlameGame {
           Foundation(),
           Tableau(),
 
-          // Lays out 28 cards into the tableau piles
+          // Prepare to lay out 28 cards from the stock pile into the tableau
+          // piles
           for (var rowIndex = 0; rowIndex < initialTableauRowCount; ++rowIndex)
             for (var colIndex = rowIndex;
                 colIndex < initialTableauColCount;
                 ++colIndex)
               () {
-                final index =
-                    (((initialTableauRowCount + 1) * initialTableauColCount) >>
-                            1) -
-                        (((initialTableauColCount - rowIndex) *
-                                (initialTableauRowCount + 1 - rowIndex)) >>
-                            1) +
-                        colIndex -
-                        rowIndex;
+                final index = initialTableauCardCount -
+                    (((initialTableauColCount - rowIndex) *
+                            (initialTableauRowCount + 1 - rowIndex)) >>
+                        1) +
+                    colIndex -
+                    rowIndex;
 
-                return CardBack(
-                  shadowKey: tableauCardKeys[index],
+                return PokerCard(
+                  key: _initialTableauCardKeys[index],
+                  shadowKey: _tableauCardShadowKeys[index],
                   hasShadow: colIndex == 0,
-                  children: [
-                    MoveEffect.to(
-                      beginCardGap +
-                          Vector2(
-                            colIndex * (cardSize.x + cardGap.x),
-                            cardSize.y + cardGap.y + rowIndex * cardStackGutter,
-                          ),
-                      EffectController(
-                        duration: 0.08,
-                        startDelay: index * 0.16,
-                      ),
-                      onComplete: () {
-                        final cardShadow = findByKey<ShadowComponent>(
-                          tableauCardKeys[index + 1],
-                        );
-
-                        if (cardShadow != null) {
-                          cardShadow.isEnabled = true;
-                        } else {
-                          // TODO: Reveal bottom-most card from each tableau pile
-                        }
-                      },
-                    ),
-                  ],
                 );
               }(),
 
           // Remaining 24 cards stay in the stock pile
-          for (var i = 0; i < 24; ++i) CardBack(),
+          for (var i = 0; i < 24; ++i) PokerCard(),
         ],
       ),
-    );
+
+      // Delay initialization that depends on components to ensure that they are
+      // fully mounted and accessible
+      TimerComponent(
+        period: double.minPositive,
+        removeOnFinish: true,
+        onTick: () {
+          // Fix the world components' position and size according to the
+          // current window size
+          onGameResize(size);
+
+          // Lay out 28 cards from the stock pile into the tableau piles
+          _layOutCard(rowIndex: 0, colIndex: 0);
+        },
+      ),
+    ]);
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
+  void _layOutCard({required int rowIndex, required int colIndex}) {
+    final index = initialTableauCardCount -
+        (((initialTableauColCount - rowIndex) *
+                (initialTableauRowCount + 1 - rowIndex)) >>
+            1) +
+        colIndex -
+        rowIndex;
 
-    if (_isIniting) {
-      // Fix the world components' position and size according to the current
-      // window size
-      onGameResize(size);
+    findByKey<PokerCard>(_initialTableauCardKeys[index])?.add(
+      MoveEffect.by(
+        Vector2(
+          colIndex * (cardSize.x + cardGap.x),
+          cardSize.y + cardGap.y + rowIndex * cardStackGutter,
+        ),
+        EffectController(duration: 0.1),
+        onComplete: () {
+          final cardShadow = findByKey<ShadowComponent>(
+            _tableauCardShadowKeys[index + 1],
+          );
 
-      _isIniting = false;
-    }
+          // Still have card yet to lay out ?
+          if (cardShadow != null) {
+            cardShadow.isEnabled = true;
+
+            // Lays out the next card
+            if (colIndex != 6) {
+              _layOutCard(rowIndex: rowIndex, colIndex: colIndex + 1);
+            } else {
+              _layOutCard(rowIndex: rowIndex + 1, colIndex: rowIndex + 1);
+            }
+
+            return;
+          }
+
+          // Reveal bottom-most card from each tableau pile
+          for (var rowIndex = 0;
+              rowIndex < initialTableauRowCount;
+              ++rowIndex) {
+            final index = initialTableauCardCount -
+                (((initialTableauColCount - rowIndex) *
+                        (initialTableauRowCount + 1 - rowIndex)) >>
+                    1);
+
+            findByKey<PokerCard>(_initialTableauCardKeys[index])
+                ?.reveal(delay: rowIndex * 0.1);
+          }
+        },
+      ),
+    );
   }
 }

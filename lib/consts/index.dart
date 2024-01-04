@@ -9,6 +9,7 @@ final suitSize = Vector2.all(40);
 final cardPlaceholderPositionOffset = Vector2(0.75, 1);
 final cardPlaceholderSizeOffset = -Vector2(1.5, 2);
 const cardBorderRadius = 4.0;
+const cardStackGutter = 14;
 
 final cardPlaceholderPaint = Paint()
   ..color = const Color(0xFF804080)
@@ -25,3 +26,9 @@ final cardPlaceholderIconPaint = Paint()
 final cardPlaceholderTextPaint = TextPaint(
   style: const TextStyle(fontSize: 48, color: Color(0xFF804080)),
 );
+
+const initialTableauRowCount = 7;
+const initialTableauColCount = 7;
+
+const initialTableauCardCount =
+    ((initialTableauRowCount + 1) * initialTableauColCount) >> 1;
