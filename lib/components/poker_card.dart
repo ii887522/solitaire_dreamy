@@ -17,8 +17,9 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   final Vector2? manuallyRevealMoveByOffset;
   final _clipKey = ComponentKey.unique();
   final _spriteKey = ComponentKey.unique();
-
-  var _canManuallyReveal = false;
+  final int manuallyRevealedPriority;
+  bool _canManuallyReveal;
+  final void Function()? onManuallyReveal;
 
   PokerCard({
     super.key,
@@ -26,8 +27,12 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     this.hasShadow = false,
     required this.model,
     this.manuallyRevealMoveByOffset,
+    canManuallyReveal = false,
+    this.manuallyRevealedPriority = 0,
+    this.onManuallyReveal,
     super.children,
-  }) : super(
+  })  : _canManuallyReveal = canManuallyReveal,
+        super(
           position: beginCardGap + cardSize * 0.5,
           size: cardSize,
           anchor: Anchor.center,
@@ -151,6 +156,8 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   @override
   void onTapUp(TapUpEvent event) {
     if (!_canManuallyReveal) return;
+    onManuallyReveal?.call();
+    priority = manuallyRevealedPriority;
     final shadowKey = this.shadowKey;
 
     if (shadowKey != null) {
@@ -165,5 +172,24 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
         EffectController(duration: 0.1),
       ),
     );
+
+    _canManuallyReveal = false;
+  }
+
+  void moveLeft() {
+    add(
+      MoveEffect.by(
+        Vector2(-cardStackGutter, 0),
+        EffectController(duration: 0.1),
+      ),
+    );
+  }
+
+  void removeShadow() {
+    final shadowKey = this.shadowKey;
+
+    if (shadowKey != null) {
+      game.findByKey<ShadowComponent>(shadowKey)?.isEnabled = false;
+    }
   }
 }

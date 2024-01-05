@@ -9,7 +9,7 @@ final suitSize = Vector2.all(40);
 final cardPlaceholderPositionOffset = Vector2(0.75, 1);
 final cardPlaceholderSizeOffset = -Vector2(1.5, 2);
 const cardBorderRadius = 4.0;
-const cardStackGutter = 14;
+const cardStackGutter = 14.0;
 
 final cardPlaceholderPaint = Paint()
   ..color = const Color(0xFF804080)

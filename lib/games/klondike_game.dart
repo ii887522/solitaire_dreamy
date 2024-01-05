@@ -27,7 +27,7 @@ class KlondikeGame extends FlameGame {
     (index) => ComponentKey.unique(),
   );
 
-  final _lastStockPileCardKey = ComponentKey.unique();
+  final _stockCardKeys = List.generate(24, (index) => ComponentKey.unique());
 
   @override
   Color backgroundColor() => Colors.transparent;
@@ -70,12 +70,13 @@ class KlondikeGame extends FlameGame {
     ];
 
     pokerCardModels.shuffle();
+    final stockKey = ComponentKey.unique();
 
     world.addAll([
       PositionComponent(
         key: _worldKey,
         children: [
-          StockPile(),
+          StockPile(key: stockKey),
           WastePile(),
           Foundation(),
           Tableau(),
@@ -105,12 +106,31 @@ class KlondikeGame extends FlameGame {
           // Remaining 24 cards stay in the stock pile
           for (final (index, pokerCardModel) in pokerCardModels.indexed)
             PokerCard(
-              key: index != pokerCardModels.length - 1
-                  ? null
-                  : _lastStockPileCardKey,
+              key: _stockCardKeys[index],
               shadowKey: ComponentKey.unique(),
               model: pokerCardModel,
-              manuallyRevealMoveByOffset: Vector2(cardSize.x + cardGap.x, 0),
+              canManuallyReveal: index != pokerCardModels.length - 1,
+              manuallyRevealMoveByOffset: Vector2(
+                cardSize.x +
+                    cardGap.x +
+                    min(pokerCardModels.length - 1 - index, 2) *
+                        cardStackGutter,
+                0,
+              ),
+              manuallyRevealedPriority: pokerCardModels.length - index,
+              onManuallyReveal: () {
+                if (index < pokerCardModels.length - 3) {
+                  findByKey<PokerCard>(_stockCardKeys[index + 1])?.moveLeft();
+                  findByKey<PokerCard>(_stockCardKeys[index + 2])?.moveLeft();
+
+                  findByKey<PokerCard>(_stockCardKeys[index + 3])
+                      ?.removeShadow();
+                }
+
+                if (index == 0) {
+                  findByKey<StockPile>(stockKey)?.removeShadow();
+                }
+              },
             ),
         ],
       ),
@@ -182,15 +202,15 @@ class KlondikeGame extends FlameGame {
                     1);
 
             findByKey<PokerCard>(_initialTableauCardKeys[index])?.reveal(
-                delay: rowIndex * 0.1,
-                onComplete: () {
-                  // The last bottom-most card has been revealed ?
-                  if (rowIndex != initialTableauRowCount - 1) return;
+              delay: rowIndex * 0.1,
+              onComplete: () {
+                // The last bottom-most card has been revealed ?
+                if (rowIndex != initialTableauRowCount - 1) return;
 
-                  // Can start playing the game
-                  findByKey<PokerCard>(_lastStockPileCardKey)
-                      ?.canManuallyReveal();
-                });
+                // Can start playing the game
+                findByKey<PokerCard>(_stockCardKeys.last)?.canManuallyReveal();
+              },
+            );
           }
         },
       ),
