@@ -16,10 +16,11 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   final PokerCardModel model;
   final Vector2? manuallyRevealMoveByOffset;
   final _clipKey = ComponentKey.unique();
-  final _spriteKey = ComponentKey.unique();
   final int manuallyRevealedPriority;
+  final int resetPriority;
   bool _canManuallyReveal;
   final void Function()? onManuallyReveal;
+  var _isFaceUp = false;
 
   PokerCard({
     super.key,
@@ -29,6 +30,7 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     this.manuallyRevealMoveByOffset,
     canManuallyReveal = false,
     this.manuallyRevealedPriority = 0,
+    this.resetPriority = 0,
     this.onManuallyReveal,
     super.children,
   })  : _canManuallyReveal = canManuallyReveal,
@@ -37,6 +39,14 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
           size: cardSize,
           anchor: Anchor.center,
         );
+
+  set hasShadow(bool value) {
+    final shadowKey = this.shadowKey;
+
+    if (shadowKey != null) {
+      game.findByKey<ShadowComponent>(shadowKey)?.isEnabled = value;
+    }
+  }
 
   @override
   FutureOr<void> onLoad() async {
@@ -59,7 +69,6 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
             },
             children: [
               SpriteComponent(
-                key: _spriteKey,
                 sprite: await Sprite.load('card_back.jpg'),
                 size: cardSize,
                 paint: Paint()..filterQuality = FilterQuality.low,
@@ -71,7 +80,9 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     );
   }
 
-  void reveal({double delay = 0.0, void Function()? onComplete}) {
+  void flip({double delay = 0.0, void Function()? onComplete}) {
+    _isFaceUp = !_isFaceUp;
+
     add(
       ScaleEffect.by(
         Vector2(0.01, 1),
@@ -81,67 +92,79 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
           duration: 0.05,
           reverseDuration: 0.05,
           onMax: () async {
-            // Flip the card horizontally from back to front
-            game.findByKey<SpriteComponent>(_spriteKey)?.removeFromParent();
+            final clip = game.findByKey<ClipComponent>(_clipKey);
 
             // Configuration
             final smallSuitSize = Vector2.all(10);
             final bigSuitSize = Vector2.all(40);
             final suitSvg = await model.suit.toSvg();
 
-            game.findByKey<ClipComponent>(_clipKey)?.addAll([
-              RectangleComponent(
-                paint: Paint()..color = Colors.white,
-                size: cardSize,
-              ),
-              TextComponent(
-                text: '${Rank(model.rank)}',
-                anchor: Anchor.topCenter,
-                position: Vector2(6, 0),
-                textRenderer: TextPaint(
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: model.suit.toColor(),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -1,
-                  ),
-                ),
-              ),
-              SvgComponent(
-                svg: suitSvg,
-                anchor: Anchor.topCenter,
-                position: Vector2(cardSize.x - 6, 4),
-                size: smallSuitSize,
-                paint: model.suit.toPaint(),
-              ),
-              SvgComponent(
-                svg: suitSvg,
-                anchor: Anchor.topCenter,
-                position: Vector2(5.8, 15),
-                size: smallSuitSize,
-                paint: model.suit.toPaint(),
-              ),
-              SvgComponent(
-                svg: suitSvg,
-                anchor: Anchor.center,
-                position: cardSize * 0.5 + Vector2(0, 6),
-                size: bigSuitSize,
-                paint: model.suit.toPaint(opacity: 0.25),
-              ),
-              TextComponent(
-                text: '${Rank(model.rank)}',
-                anchor: Anchor.center,
-                position: cardSize * 0.5 + Vector2(0, 2.5),
-                textRenderer: TextPaint(
-                  style: TextStyle(
-                    fontSize: 48,
-                    color: model.suit.toColor(),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -4,
-                  ),
-                ),
-              ),
-            ]);
+            // Flip the card horizontally from back to front
+            clip?.removeWhere((component) => true);
+
+            clip?.addAll(
+              _isFaceUp
+                  ? [
+                      RectangleComponent(
+                        paint: Paint()..color = Colors.white,
+                        size: cardSize,
+                      ),
+                      TextComponent(
+                        text: '${Rank(model.rank)}',
+                        anchor: Anchor.topCenter,
+                        position: Vector2(6, 0),
+                        textRenderer: TextPaint(
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: model.suit.toColor(),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                      ),
+                      SvgComponent(
+                        svg: suitSvg,
+                        anchor: Anchor.topCenter,
+                        position: Vector2(cardSize.x - 6, 4),
+                        size: smallSuitSize,
+                        paint: model.suit.toPaint(),
+                      ),
+                      SvgComponent(
+                        svg: suitSvg,
+                        anchor: Anchor.topCenter,
+                        position: Vector2(5.8, 15),
+                        size: smallSuitSize,
+                        paint: model.suit.toPaint(),
+                      ),
+                      SvgComponent(
+                        svg: suitSvg,
+                        anchor: Anchor.center,
+                        position: cardSize * 0.5 + Vector2(0, 6),
+                        size: bigSuitSize,
+                        paint: model.suit.toPaint(opacity: 0.25),
+                      ),
+                      TextComponent(
+                        text: '${Rank(model.rank)}',
+                        anchor: Anchor.center,
+                        position: cardSize * 0.5 + Vector2(0, 2.5),
+                        textRenderer: TextPaint(
+                          style: TextStyle(
+                            fontSize: 48,
+                            color: model.suit.toColor(),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -4,
+                          ),
+                        ),
+                      ),
+                    ]
+                  : [
+                      SpriteComponent(
+                        sprite: await Sprite.load('card_back.jpg'),
+                        size: cardSize,
+                        paint: Paint()..filterQuality = FilterQuality.low,
+                      ),
+                    ],
+            );
           },
         ),
         onComplete: onComplete,
@@ -158,13 +181,8 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     if (!_canManuallyReveal) return;
     onManuallyReveal?.call();
     priority = manuallyRevealedPriority;
-    final shadowKey = this.shadowKey;
-
-    if (shadowKey != null) {
-      game.findByKey<ShadowComponent>(shadowKey)?.isEnabled = true;
-    }
-
-    reveal();
+    hasShadow = true;
+    flip();
 
     add(
       MoveEffect.by(
@@ -185,11 +203,20 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     );
   }
 
-  void removeShadow() {
-    final shadowKey = this.shadowKey;
+  void reset({void Function()? onComplete}) {
+    // Put them back to their original position
+    add(
+      MoveEffect.to(
+        beginCardGap + cardSize * 0.5,
+        EffectController(duration: 0.1),
+        onComplete: onComplete,
+      ),
+    );
 
-    if (shadowKey != null) {
-      game.findByKey<ShadowComponent>(shadowKey)?.isEnabled = false;
-    }
+    // Conceal the card
+    canManuallyReveal();
+    priority = resetPriority;
+    hasShadow = false;
+    flip();
   }
 }

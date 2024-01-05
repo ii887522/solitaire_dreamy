@@ -76,7 +76,7 @@ class KlondikeGame extends FlameGame {
       PositionComponent(
         key: _worldKey,
         children: [
-          StockPile(key: stockKey),
+          StockPile(key: stockKey, cardKeys: _stockCardKeys),
           WastePile(),
           Foundation(),
           Tableau(),
@@ -118,13 +118,14 @@ class KlondikeGame extends FlameGame {
                 0,
               ),
               manuallyRevealedPriority: pokerCardModels.length - index,
+              resetPriority: index + 1,
               onManuallyReveal: () {
                 if (index < pokerCardModels.length - 3) {
                   findByKey<PokerCard>(_stockCardKeys[index + 1])?.moveLeft();
                   findByKey<PokerCard>(_stockCardKeys[index + 2])?.moveLeft();
 
-                  findByKey<PokerCard>(_stockCardKeys[index + 3])
-                      ?.removeShadow();
+                  findByKey<PokerCard>(_stockCardKeys[index + 3])?.hasShadow =
+                      false;
                 }
 
                 if (index == 0) {
@@ -201,7 +202,7 @@ class KlondikeGame extends FlameGame {
                         (initialTableauRowCount + 1 - rowIndex)) >>
                     1);
 
-            findByKey<PokerCard>(_initialTableauCardKeys[index])?.reveal(
+            findByKey<PokerCard>(_initialTableauCardKeys[index])?.flip(
               delay: rowIndex * 0.1,
               onComplete: () {
                 // The last bottom-most card has been revealed ?
