@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:solitaire_dreamy/consts/index.dart';
 
 class TableauPile extends PositionComponent {
-  TableauPile({super.position});
+  TableauPile({super.position})
+      : super(size: cardSize + cardPlaceholderSizeOffset);
 
   @override
   FutureOr<void> onLoad() {

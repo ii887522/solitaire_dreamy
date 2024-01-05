@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame_svg/svg_component.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ import 'package:solitaire_dreamy/consts/index.dart';
 import 'package:solitaire_dreamy/models/poker_card_model.dart';
 import 'package:solitaire_dreamy/models/rank.dart';
 
-class PokerCard extends PositionComponent with HasGameRef {
+class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   final ComponentKey? shadowKey;
   final bool hasShadow;
   final PokerCardModel model;
@@ -22,14 +23,17 @@ class PokerCard extends PositionComponent with HasGameRef {
     this.hasShadow = false,
     required this.model,
     super.children,
-  }) : super(position: beginCardGap + cardSize * 0.5, anchor: Anchor.center);
+  }) : super(
+          position: beginCardGap + cardSize * 0.5,
+          size: cardSize,
+          anchor: Anchor.center,
+        );
 
   @override
   FutureOr<void> onLoad() async {
     add(
       ShadowComponent(
         key: shadowKey,
-        position: -cardSize * 0.5,
         size: cardSize,
         borderRadius: cardBorderRadius,
         isEnabled: hasShadow,
@@ -133,5 +137,13 @@ class PokerCard extends PositionComponent with HasGameRef {
         ),
       ),
     );
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    // print('onTapUp()');
+    // TODO: Reveal the top-most card while move the card to the waste pile
+    // TODO: Add ScaleEffect
+    // TODO: Add MoveByEffect
   }
 }

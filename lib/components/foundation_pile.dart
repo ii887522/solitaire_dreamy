@@ -7,7 +7,8 @@ import 'package:solitaire_dreamy/consts/index.dart';
 class FoundationPile extends PositionComponent {
   final String suitIconFileName;
 
-  FoundationPile({super.position, required this.suitIconFileName});
+  FoundationPile({super.position, required this.suitIconFileName})
+      : super(size: cardSize + cardPlaceholderSizeOffset);
 
   @override
   FutureOr<void> onLoad() async {

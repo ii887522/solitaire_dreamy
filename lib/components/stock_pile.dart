@@ -6,7 +6,11 @@ import 'package:solitaire_dreamy/components/common/shadow_component.dart';
 import 'package:solitaire_dreamy/consts/index.dart';
 
 class StockPile extends PositionComponent {
-  StockPile() : super(position: beginCardGap);
+  StockPile()
+      : super(
+          position: beginCardGap,
+          size: cardSize + cardPlaceholderSizeOffset,
+        );
 
   @override
   FutureOr<void> onLoad() async {

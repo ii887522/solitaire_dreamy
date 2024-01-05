@@ -8,6 +8,7 @@ class WastePile extends PositionComponent {
           position: beginCardGap +
               Vector2(cardSize.x + cardGap.x, 0) +
               cardPlaceholderPositionOffset,
+          size: cardSize + cardPlaceholderSizeOffset,
         );
 
   @override
