@@ -27,6 +27,8 @@ class KlondikeGame extends FlameGame {
     (index) => ComponentKey.unique(),
   );
 
+  final _lastStockPileCardKey = ComponentKey.unique();
+
   @override
   Color backgroundColor() => Colors.transparent;
 
@@ -101,9 +103,15 @@ class KlondikeGame extends FlameGame {
               }(),
 
           // Remaining 24 cards stay in the stock pile
-          ...pokerCardModels.map(
-            (pokerCardModel) => PokerCard(model: pokerCardModel),
-          ),
+          for (final (index, pokerCardModel) in pokerCardModels.indexed)
+            PokerCard(
+              key: index != pokerCardModels.length - 1
+                  ? null
+                  : _lastStockPileCardKey,
+              shadowKey: ComponentKey.unique(),
+              model: pokerCardModel,
+              manuallyRevealMoveByOffset: Vector2(cardSize.x + cardGap.x, 0),
+            ),
         ],
       ),
 
@@ -173,8 +181,16 @@ class KlondikeGame extends FlameGame {
                         (initialTableauRowCount + 1 - rowIndex)) >>
                     1);
 
-            findByKey<PokerCard>(_initialTableauCardKeys[index])
-                ?.reveal(delay: rowIndex * 0.1);
+            findByKey<PokerCard>(_initialTableauCardKeys[index])?.reveal(
+                delay: rowIndex * 0.1,
+                onComplete: () {
+                  // The last bottom-most card has been revealed ?
+                  if (rowIndex != initialTableauRowCount - 1) return;
+
+                  // Can start playing the game
+                  findByKey<PokerCard>(_lastStockPileCardKey)
+                      ?.canManuallyReveal();
+                });
           }
         },
       ),

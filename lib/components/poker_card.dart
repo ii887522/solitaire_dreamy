@@ -14,14 +14,18 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   final ComponentKey? shadowKey;
   final bool hasShadow;
   final PokerCardModel model;
+  final Vector2? manuallyRevealMoveByOffset;
   final _clipKey = ComponentKey.unique();
   final _spriteKey = ComponentKey.unique();
+
+  var _canManuallyReveal = false;
 
   PokerCard({
     super.key,
     this.shadowKey,
     this.hasShadow = false,
     required this.model,
+    this.manuallyRevealMoveByOffset,
     super.children,
   }) : super(
           position: beginCardGap + cardSize * 0.5,
@@ -62,7 +66,7 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     );
   }
 
-  void reveal({double delay = 0.0}) {
+  void reveal({double delay = 0.0, void Function()? onComplete}) {
     add(
       ScaleEffect.by(
         Vector2(0.01, 1),
@@ -135,15 +139,31 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
             ]);
           },
         ),
+        onComplete: onComplete,
       ),
     );
   }
 
+  void canManuallyReveal() {
+    _canManuallyReveal = true;
+  }
+
   @override
   void onTapUp(TapUpEvent event) {
-    // print('onTapUp()');
-    // TODO: Reveal the top-most card while move the card to the waste pile
-    // TODO: Add ScaleEffect
-    // TODO: Add MoveByEffect
+    if (!_canManuallyReveal) return;
+    final shadowKey = this.shadowKey;
+
+    if (shadowKey != null) {
+      game.findByKey<ShadowComponent>(shadowKey)?.isEnabled = true;
+    }
+
+    reveal();
+
+    add(
+      MoveEffect.by(
+        manuallyRevealMoveByOffset ?? Vector2.zero(),
+        EffectController(duration: 0.1),
+      ),
+    );
   }
 }
