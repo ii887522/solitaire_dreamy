@@ -12,6 +12,7 @@ import 'package:solitaire_dreamy/components/tableau.dart';
 import 'package:solitaire_dreamy/components/waste_pile.dart';
 import 'package:solitaire_dreamy/consts/index.dart';
 import 'package:solitaire_dreamy/models/poker_card_model.dart';
+import 'package:solitaire_dreamy/models/rank.dart';
 import 'package:solitaire_dreamy/models/suit.dart';
 
 class KlondikeGame extends FlameGame {
@@ -62,10 +63,10 @@ class KlondikeGame extends FlameGame {
   FutureOr<void> onLoad() async {
     camera.viewfinder.anchor = Anchor.topLeft;
 
-    // Shuffle a standard 52-card deck
+    // Shuffle a standard card deck
     final pokerCardModels = [
       for (final suit in Suit.values)
-        for (var rank = 1; rank <= 13; ++rank)
+        for (var rank = 1; rank <= Rank.max; ++rank)
           PokerCardModel(suit: suit, rank: rank)
     ];
 

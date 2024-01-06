@@ -9,8 +9,12 @@ import 'package:solitaire_dreamy/components/common/shadow_component.dart';
 import 'package:solitaire_dreamy/consts/index.dart';
 import 'package:solitaire_dreamy/models/poker_card_model.dart';
 import 'package:solitaire_dreamy/models/rank.dart';
+import 'package:solitaire_dreamy/models/suit.dart';
 
-class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
+class PokerCard extends PositionComponent
+    with HasGameRef, TapCallbacks, DragCallbacks {
+  static var _dragStartCount = 0;
+  static var _draggingCount = 0;
   final ComponentKey? shadowKey;
   final bool hasShadow;
   final PokerCardModel model;
@@ -21,6 +25,9 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   bool _canManuallyReveal;
   final void Function()? onManuallyReveal;
   var _isFaceUp = false;
+  late int _prevPriority;
+  late Vector2 _prevPosition;
+  var _isRestoring = false;
 
   PokerCard({
     super.key,
@@ -38,7 +45,10 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
           position: beginCardGap + cardSize * 0.5,
           size: cardSize,
           anchor: Anchor.center,
-        );
+        ) {
+    _prevPriority = priority;
+    _prevPosition = position.clone();
+  }
 
   set hasShadow(bool value) {
     final shadowKey = this.shadowKey;
@@ -81,8 +91,6 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
   }
 
   void flip({double delay = 0.0, void Function()? onComplete}) {
-    _isFaceUp = !_isFaceUp;
-
     add(
       ScaleEffect.by(
         Vector2(0.01, 1),
@@ -92,6 +100,7 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
           duration: 0.05,
           reverseDuration: 0.05,
           onMax: () async {
+            _isFaceUp = !_isFaceUp;
             final clip = game.findByKey<ClipComponent>(_clipKey);
 
             // Configuration
@@ -218,5 +227,45 @@ class PokerCard extends PositionComponent with HasGameRef, TapCallbacks {
     priority = resetPriority;
     hasShadow = false;
     flip();
+  }
+
+  @override
+  void onDragStart(DragStartEvent event) {
+    if (!_isFaceUp || _isRestoring) return;
+
+    // Save the current component state
+    _prevPriority = priority;
+    _prevPosition = position.clone();
+
+    super.onDragStart(event);
+    ++_dragStartCount;
+    ++_draggingCount;
+    priority = Suit.values.length * Rank.max + _dragStartCount;
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    if (isDragged) position += event.localDelta;
+  }
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+    if (!isDragged) return;
+    super.onDragEnd(event);
+    _isRestoring = true;
+
+    // Restore the saved component state
+    add(
+      MoveEffect.to(
+        _prevPosition,
+        EffectController(duration: 0.25, curve: Curves.easeOut),
+        onComplete: () {
+          priority = _prevPriority;
+          _isRestoring = false;
+          --_draggingCount;
+          if (_draggingCount == 0) _dragStartCount = 0;
+        },
+      ),
+    );
   }
 }
