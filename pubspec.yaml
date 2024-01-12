@@ -26,14 +26,14 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  flame: ^1.13.1
-  simple_shadow: ^0.3.1
+  flame: ^1.14.0
   flutter_svg: ^2.0.9
   flutter_localizations:
     sdk: flutter
   intl: any
-  flame_svg: ^1.8.8
+  flame_svg: ^1.8.9
   window_manager: ^0.3.7
+  simple_shadow: ^0.3.1
 
 dev_dependencies:
   flutter_test:
@@ -46,7 +46,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   generate: true
-  
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -84,16 +84,16 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
 icons_launcher:
-  image_path: assets/images/favicon.png
+  image_path: assets/favicon.png
   platforms:
     android:
       enable: true
     ios:
       enable: true
-      image_path: assets/images/favicon.jpg
+      image_path: assets/favicon.jpg
     web:
       enable: true
-      favicon_path: assets/images/favicon.png
+      favicon_path: assets/favicon.png
     macos:
       enable: true
     windows:

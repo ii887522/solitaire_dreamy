@@ -1,20 +1,15 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Card;
 
 class ShadowComponent extends PositionComponent {
+  final double cornerRadius;
   bool isEnabled;
-  final double borderRadius;
-  final Color color;
-  final double elevation;
 
   ShadowComponent({
     super.key,
-    this.isEnabled = true,
-    super.position,
     super.size,
-    this.borderRadius = 0,
-    this.color = Colors.black,
-    this.elevation = 4,
+    this.cornerRadius = 0,
+    this.isEnabled = false,
     super.children,
   });
 
@@ -22,19 +17,20 @@ class ShadowComponent extends PositionComponent {
   void render(Canvas canvas) {
     if (!isEnabled) return;
 
-    for (var i = 0; i < 2; ++i) {
-      canvas.drawShadow(
-        Path()
-          ..addRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromPoints(const Offset(0, -3), size.toOffset()),
-              Radius.circular(borderRadius),
+    canvas.drawShadow(
+      Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromPoints(
+              const Offset(-2, -3),
+              size.toOffset() + const Offset(1.5, 1),
             ),
+            Radius.circular(cornerRadius),
           ),
-        color,
-        elevation,
-        false,
-      );
-    }
+        ),
+      Colors.black,
+      3,
+      false,
+    );
   }
 }

@@ -1,22 +1,21 @@
 import 'dart:async';
 import 'package:flame/components.dart';
-import 'package:solitaire_dreamy/consts/index.dart';
+import '../consts/index.dart';
+import 'card.dart';
 
 class WastePile extends PositionComponent {
-  WastePile()
+  WastePile({super.key})
       : super(
-          position: beginCardGap +
-              Vector2(cardSize.x + cardGap.x, 0) +
-              cardPlaceholderPositionOffset,
-          size: cardSize + cardPlaceholderSizeOffset,
+          position: Vector2(Card.size_.x + Card.gap.x * 2, Card.gap.y),
+          size: Card.size_,
         );
 
   @override
-  FutureOr<void> onLoad() {
+  FutureOr<void> onLoad() async {
     add(
       RectangleComponent(
-        size: cardSize + cardPlaceholderSizeOffset,
-        paint: cardPlaceholderPaint,
+        size: Card.size_,
+        paint: cardPlaceholderBorderPaint,
       ),
     );
   }

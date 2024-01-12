@@ -1,29 +1,25 @@
 import 'dart:async';
 import 'package:flame/components.dart';
-import 'package:flame_svg/svg.dart';
-import 'package:flame_svg/svg_component.dart';
-import 'package:solitaire_dreamy/consts/index.dart';
+import 'package:flame_svg/flame_svg.dart';
+import '../consts/index.dart';
+import 'card.dart';
 
 class FoundationPile extends PositionComponent {
-  final String suitIconFileName;
+  final String iconFileName;
 
-  FoundationPile({super.position, required this.suitIconFileName})
-      : super(size: cardSize + cardPlaceholderSizeOffset);
+  FoundationPile({super.position, required this.iconFileName})
+      : super(size: Card.size_);
 
   @override
   FutureOr<void> onLoad() async {
     addAll([
-      RectangleComponent(
-        position: cardPlaceholderPositionOffset,
-        size: cardSize + cardPlaceholderSizeOffset,
-        paint: cardPlaceholderPaint,
-      ),
+      RectangleComponent(size: Card.size_, paint: cardPlaceholderBorderPaint),
       SvgComponent(
-        svg: await Svg.load(suitIconFileName, pixelRatio: 4),
+        svg: await Svg.load(iconFileName, pixelRatio: 4),
         anchor: Anchor.center,
-        position: cardSize * 0.5,
-        size: suitSize,
-        paint: cardPlaceholderIconPaint,
+        position: size * 0.5,
+        size: Vector2.all(40),
+        paint: cardPlaceholderSvgPaint,
       ),
     ]);
   }

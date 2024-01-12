@@ -69,18 +69,18 @@ packages:
     dependency: "direct main"
     description:
       name: flame
-      sha256: aa5aec029f5037e07b44b84df3f495ce159d078b528555470148582581e4915c
+      sha256: "61c42b966a6b1f44ee093194e6701d45b14fdda1859c14fe68a39489454bfbd4"
       url: "https://pub.dev"
     source: hosted
-    version: "1.13.1"
+    version: "1.14.0"
   flame_svg:
     dependency: "direct main"
     description:
       name: flame_svg
-      sha256: e12ce074d46f4ff5f97830f4f8d9c04040b634b1b2af25847bf174403e1e1232
+      sha256: c9ec176fd6ea6e918974662dd58f45d8ab0cb7bf22cb0e1bcbc91208a65674f3
       url: "https://pub.dev"
     source: hosted
-    version: "1.8.8"
+    version: "1.8.9"
   flutter:
     dependency: "direct main"
     description: flutter

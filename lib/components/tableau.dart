@@ -1,22 +1,25 @@
 import 'dart:async';
 import 'package:flame/components.dart';
-import 'package:solitaire_dreamy/components/tableau_pile.dart';
-import 'package:solitaire_dreamy/consts/index.dart';
+import 'card.dart';
+import 'tableau_pile.dart';
 
 class Tableau extends PositionComponent {
-  Tableau()
-      : super(position: beginCardGap + Vector2(0, cardSize.y + cardGap.y));
+  final List<ComponentKey> pileKeys;
+
+  Tableau({required this.pileKeys})
+      : super(
+          position: Vector2(Card.gap.x, Card.size_.y + Card.gap.y * 2),
+          size: Vector2(Card.size_.x * 7 + Card.gap.x * 6, Card.size_.y),
+        );
 
   @override
   FutureOr<void> onLoad() {
     addAll([
-      TableauPile(),
-      TableauPile(position: Vector2(cardSize.x + cardGap.x, 0)),
-      TableauPile(position: Vector2(cardSize.x * 2 + cardGap.x * 2, 0)),
-      TableauPile(position: Vector2(cardSize.x * 3 + cardGap.x * 3, 0)),
-      TableauPile(position: Vector2(cardSize.x * 4 + cardGap.x * 4, 0)),
-      TableauPile(position: Vector2(cardSize.x * 5 + cardGap.x * 5, 0)),
-      TableauPile(position: Vector2(cardSize.x * 6 + cardGap.x * 6, 0)),
+      for (final (i, pileKey) in pileKeys.indexed)
+        TableauPile(
+          key: pileKey,
+          position: Vector2((Card.size_.x + Card.gap.x) * i, 0),
+        ),
     ]);
   }
 }

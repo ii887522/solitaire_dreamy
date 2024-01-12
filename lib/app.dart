@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:solitaire_dreamy/pages/klondike_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'pages/klondike_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -14,7 +14,7 @@ class App extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         appBarTheme: AppBarTheme.of(context).copyWith(
-          elevation: 6,
+          elevation: 4,
           shadowColor: Colors.black,
         ),
         colorScheme: const ColorScheme(

@@ -1,5 +1,8 @@
 class Rank {
+  // Constants
+  static const min = 1;
   static const max = 13;
+
   final int value;
 
   const Rank(this.value);

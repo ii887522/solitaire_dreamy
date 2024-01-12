@@ -1,8 +1,13 @@
 {
     "@@locale": "en",
     "easy": "Easy",
+    "@easy": {},
     "medium": "Medium",
+    "@medium": {},
     "hard": "HARD",
+    "@hard": {},
     "moves": "Moves",
-    "timeTaken": "Time taken"
+    "@moves": {},
+    "timeTaken": "Time taken",
+    "@timeTaken": {}
 }

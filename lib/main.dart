@@ -1,20 +1,20 @@
-import 'dart:io';
+import 'extensions/platform_ext.dart';
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
-import 'package:solitaire_dreamy/app.dart';
 import 'package:window_manager/window_manager.dart';
+import 'app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+  if (PlatformExt.isDesktop) {
     await windowManager.ensureInitialized();
 
     windowManager.waitUntilReadyToShow(
       const WindowOptions(
         center: true,
-        minimumSize: Size(320, 500),
-        size: Size(461, 720),
+        minimumSize: Size(320, 461),
+        size: Size(533, 768),
       ),
       () async {
         await windowManager.show();
