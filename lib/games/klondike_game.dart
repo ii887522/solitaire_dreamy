@@ -50,9 +50,7 @@ class KlondikeGame extends FlameGame {
           CardModel(suit: suit, rank: Rank(rank), parentKey: stockPileKey)
     ];
 
-    final random = Random(0); // TODO: For testing purpose
-    cardModels.shuffle(random);
-
+    cardModels.shuffle();
     var stockPileCardKeys = [for (final _ in cardModels) ComponentKey.unique()];
     final wastePileKey = ComponentKey.unique();
     var wastePileCardKeys = <ComponentKey>[];
@@ -258,7 +256,7 @@ class KlondikeGame extends FlameGame {
                         0,
                         Card.stackGap.y * (dstTableauPileCardKeyIndex + i),
                       ),
-                      priority: stackedCard.priority + 1,
+                      priority: stackedCard.priority + 1 + i,
                     ),
                 ].nonNulls);
 
@@ -310,7 +308,6 @@ class KlondikeGame extends FlameGame {
             for (var k = j; k < tableauPileKeys.length; ++k) {
               final cardKey = stockPileCardKeys.removeLast();
               tableauPilesCardKeys[k].add(cardKey);
-
               final card = findByKey<Card>(cardKey);
               card?.model.parentKey = tableauPileKeys[k];
 

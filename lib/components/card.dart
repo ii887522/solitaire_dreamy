@@ -261,29 +261,37 @@ class Card extends PositionComponent
         .elementAtOrNull(1);
 
     if (stackedCard == null || !await _tryStack(stackedCard)) {
-      // Failed to stack the card. Return back to where it was before
-      final effectFutures = <Future<void>>[];
-
-      for (final stackingCardKey in _stackingCardKeys) {
-        final stackingCard = game.findByKey<Card>(stackingCardKey);
-
-        effectFutures.add(
-          stackingCard?.moveToComponent(
-                stackingCard.model.parentKey,
-                offset: stackingCard._prevOffset,
-              ) ??
-              Future.value(),
-        );
-      }
-
-      await Future.wait(effectFutures);
-
-      for (final stackingCardKey in _stackingCardKeys) {
-        final stackingCard = game.findByKey<Card>(stackingCardKey);
-        stackingCard?.priority = stackingCard._prevPriority;
-      }
+      // Failed to stack the card
+      await _returnBack();
     }
 
+    _allowDrag();
+  }
+
+  Future<void> _returnBack() async {
+    final effectFutures = <Future<void>>[];
+
+    for (final stackingCardKey in _stackingCardKeys) {
+      final stackingCard = game.findByKey<Card>(stackingCardKey);
+
+      effectFutures.add(
+        stackingCard?.moveToComponent(
+              stackingCard.model.parentKey,
+              offset: stackingCard._prevOffset,
+            ) ??
+            Future.value(),
+      );
+    }
+
+    await Future.wait(effectFutures);
+
+    for (final stackingCardKey in _stackingCardKeys) {
+      final stackingCard = game.findByKey<Card>(stackingCardKey);
+      stackingCard?.priority = stackingCard._prevPriority;
+    }
+  }
+
+  void _allowDrag() {
     for (final stackingCardKey in _stackingCardKeys) {
       game.findByKey<Card>(stackingCardKey)?.model.isDraggable = true;
     }

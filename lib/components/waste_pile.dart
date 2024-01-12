@@ -13,10 +13,7 @@ class WastePile extends PositionComponent {
   @override
   FutureOr<void> onLoad() async {
     add(
-      RectangleComponent(
-        size: Card.size_,
-        paint: cardPlaceholderBorderPaint,
-      ),
+      RectangleComponent(size: Card.size_, paint: cardPlaceholderBorderPaint),
     );
   }
 }
