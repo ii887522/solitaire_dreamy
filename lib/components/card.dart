@@ -39,6 +39,7 @@ class Card extends PositionComponent
   // Ephemeral state to save and restore
   var _prevPriority = 0;
   var _prevOffset = Vector2.zero();
+  bool _prevHasShadow;
 
   Card({
     required this.key,
@@ -54,6 +55,7 @@ class Card extends PositionComponent
         _tryStackComponents =
             tryStackComponents ?? ((stackedComponents) => Future.value(false)),
         _findStackingCardKeys = findStackingCardKeys ?? (() => []),
+        _prevHasShadow = hasShadow,
         super(
           key: key,
           anchor: Anchor.center,
@@ -97,7 +99,7 @@ class Card extends PositionComponent
     ComponentKey componentKey, {
     Vector2? offset,
     int? priority,
-    bool hasShadow = true,
+    bool? hasShadow,
   }) {
     offset = offset ?? Vector2.zero();
     _prevOffset = offset;
@@ -110,7 +112,11 @@ class Card extends PositionComponent
     final playingAreaPosition = playingArea?.topLeftPosition ?? Vector2.zero();
     final playingAreaScale = playingArea?.scale.x ?? 1;
     final completer = Completer<void>();
-    game.findByKey<ShadowComponent>(_shadowKey)?.isEnabled = hasShadow;
+
+    if (hasShadow != null) {
+      game.findByKey<ShadowComponent>(_shadowKey)?.isEnabled = hasShadow;
+    }
+
     if (priority != null) this.priority = priority;
 
     add(
@@ -237,9 +243,13 @@ class Card extends PositionComponent
 
     for (final (i, stackingCardKey) in _stackingCardKeys.indexed) {
       final stackingCard = game.findByKey<Card>(stackingCardKey);
-      stackingCard?.model.isDraggable = false;
-      stackingCard?._prevPriority = stackingCard.priority;
-      stackingCard?.priority = 100 + i;
+      if (stackingCard == null) continue;
+      stackingCard.model.isDraggable = false;
+      stackingCard._prevPriority = stackingCard.priority;
+      stackingCard.priority = 100 + i;
+      final shadow = game.findByKey<ShadowComponent>(stackingCard._shadowKey);
+      stackingCard._prevHasShadow = shadow?.isEnabled ?? false;
+      shadow?.isEnabled = true;
     }
   }
 
@@ -301,7 +311,11 @@ class Card extends PositionComponent
 
     for (final stackingCardKey in _stackingCardKeys) {
       final stackingCard = game.findByKey<Card>(stackingCardKey);
-      stackingCard?.priority = stackingCard._prevPriority;
+      if (stackingCard == null) continue;
+      stackingCard.priority = stackingCard._prevPriority;
+
+      game.findByKey<ShadowComponent>(stackingCard._shadowKey)?.isEnabled =
+          stackingCard._prevHasShadow;
     }
   }
 

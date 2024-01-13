@@ -12,5 +12,6 @@ final cardPlaceholderSvgPaint = Paint()
   ..colorFilter = const ColorFilter.mode(cardPlaceholderColor, BlendMode.srcIn)
   ..filterQuality = FilterQuality.low;
 
-// Others
+// Pile counts
 const tableauPileCount = 7;
+const foundationPileCount = 4;

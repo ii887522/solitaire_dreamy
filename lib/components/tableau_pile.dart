@@ -18,6 +18,16 @@ class TableauPile extends PositionComponent {
     return stackingCardModel.rank.value == Rank.max;
   }
 
+  static bool isStackable(
+    CardModel stackingCardModel,
+    CardModel stackedCardModel,
+  ) {
+    // Follow the classic Klondike game rules
+    return stackingCardModel.suit.toColor() !=
+            stackedCardModel.suit.toColor() &&
+        stackingCardModel.rank.value + 1 == stackedCardModel.rank.value;
+  }
+
   @override
   FutureOr<void> onLoad() async {
     addAll([

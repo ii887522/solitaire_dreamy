@@ -8,10 +8,20 @@ import '../models/suit.dart';
 import 'card.dart';
 
 class FoundationPile extends PositionComponent {
+  final ComponentKey key;
   final Suit suit;
 
-  FoundationPile({super.position, required this.suit})
-      : super(size: Card.size_);
+  FoundationPile({required this.key, super.position, required this.suit})
+      : super(key: key, size: Card.size_);
+
+  static bool isStackable(
+    CardModel stackingCardModel,
+    CardModel stackedCardModel,
+  ) {
+    // Follow the classic Klondike game rules
+    return stackingCardModel.suit == stackedCardModel.suit &&
+        stackingCardModel.rank.value - 1 == stackedCardModel.rank.value;
+  }
 
   @override
   FutureOr<void> onLoad() async {
