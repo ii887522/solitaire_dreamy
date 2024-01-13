@@ -78,7 +78,7 @@ class KlondikeGame extends FlameGame {
           CardModel(suit: suit, rank: Rank(rank), parentKey: _stockPileKey)
     ];
 
-    cardModels.shuffle(Random(0));
+    cardModels.shuffle();
     late final int maxStockPileCardCount;
 
     world.addAll([
