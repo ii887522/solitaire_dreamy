@@ -13,10 +13,4 @@ class CardModel {
   var isDraggable = false;
 
   CardModel({required this.suit, required this.rank, required this.parentKey});
-
-  bool isStackable(CardModel stackedCardModel) {
-    // Follow the classic Klondike game rules
-    return suit.toColor() != stackedCardModel.suit.toColor() &&
-        rank.value + 1 == stackedCardModel.rank.value;
-  }
 }

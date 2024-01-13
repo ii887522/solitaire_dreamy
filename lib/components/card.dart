@@ -25,7 +25,11 @@ class Card extends PositionComponent
 
   // Callbacks
   final void Function(Card card) _onTapUp;
-  final Future<bool> Function(Card stackedCard) _tryStack;
+  final Future<bool> Function(Card stackedCard) _tryStackCard;
+
+  final Future<bool> Function(Iterable<Component> stackedComponents)
+      _tryStackComponents;
+
   final List<ComponentKey> Function() _findStackingCardKeys;
 
   // Component keys
@@ -35,17 +39,23 @@ class Card extends PositionComponent
   // Ephemeral state to save and restore
   var _prevPriority = 0;
   var _prevOffset = Vector2.zero();
+  bool _prevHasShadow;
 
   Card({
     required this.key,
     required this.model,
     this.hasShadow = false,
     void Function(Card card)? onTapUp,
-    Future<bool> Function(Card stackedCard)? tryStack,
+    Future<bool> Function(Card stackedCard)? tryStackCard,
+    Future<bool> Function(Iterable<Component> stackedComponents)?
+        tryStackComponents,
     List<ComponentKey> Function()? findStackingCardKeys,
   })  : _onTapUp = onTapUp ?? ((card) {}),
-        _tryStack = tryStack ?? ((stackedCard) => Future.value(false)),
+        _tryStackCard = tryStackCard ?? ((stackedCard) => Future.value(false)),
+        _tryStackComponents =
+            tryStackComponents ?? ((stackedComponents) => Future.value(false)),
         _findStackingCardKeys = findStackingCardKeys ?? (() => []),
+        _prevHasShadow = hasShadow,
         super(
           key: key,
           anchor: Anchor.center,
@@ -89,7 +99,7 @@ class Card extends PositionComponent
     ComponentKey componentKey, {
     Vector2? offset,
     int? priority,
-    bool hasShadow = true,
+    bool? hasShadow,
   }) {
     offset = offset ?? Vector2.zero();
     _prevOffset = offset;
@@ -102,7 +112,11 @@ class Card extends PositionComponent
     final playingAreaPosition = playingArea?.topLeftPosition ?? Vector2.zero();
     final playingAreaScale = playingArea?.scale.x ?? 1;
     final completer = Completer<void>();
-    game.findByKey<ShadowComponent>(_shadowKey)?.isEnabled = hasShadow;
+
+    if (hasShadow != null) {
+      game.findByKey<ShadowComponent>(_shadowKey)?.isEnabled = hasShadow;
+    }
+
     if (priority != null) this.priority = priority;
 
     add(
@@ -229,9 +243,13 @@ class Card extends PositionComponent
 
     for (final (i, stackingCardKey) in _stackingCardKeys.indexed) {
       final stackingCard = game.findByKey<Card>(stackingCardKey);
-      stackingCard?.model.isDraggable = false;
-      stackingCard?._prevPriority = stackingCard.priority;
-      stackingCard?.priority = 100 + i;
+      if (stackingCard == null) continue;
+      stackingCard.model.isDraggable = false;
+      stackingCard._prevPriority = stackingCard.priority;
+      stackingCard.priority = 100 + i;
+      final shadow = game.findByKey<ShadowComponent>(stackingCard._shadowKey);
+      stackingCard._prevHasShadow = shadow?.isEnabled ?? false;
+      shadow?.isEnabled = true;
     }
   }
 
@@ -249,18 +267,24 @@ class Card extends PositionComponent
     if (!isDragged) return;
     super.onDragEnd(event);
 
-    final stackedCard = game
-        .findByKey<PositionComponent>(game.playingAreaKey)
-        ?.componentsAtPoint(
-          position -
-              (_stackingCardKeys.length == 1
-                  ? Vector2.zero()
-                  : Vector2(0, (size.y - Card.stackGap.y) * 0.5)),
-        )
-        .whereType<Card>()
-        .elementAtOrNull(1);
+    final stackedComponents = game
+            .findByKey<PositionComponent>(game.playingAreaKey)
+            ?.componentsAtPoint(
+              position -
+                  (_stackingCardKeys.length == 1
+                      ? Vector2.zero()
+                      : Vector2(0, (size.y - Card.stackGap.y) * 0.5)),
+            ) ??
+        [];
 
-    if (stackedCard == null || !await _tryStack(stackedCard)) {
+    final stackedCard = stackedComponents.whereType<Card>().elementAtOrNull(1);
+
+    if (stackedCard != null) {
+      if (!await _tryStackCard(stackedCard)) {
+        // Failed to stack the card
+        await _returnBack();
+      }
+    } else if (!await _tryStackComponents(stackedComponents)) {
       // Failed to stack the card
       await _returnBack();
     }
@@ -287,7 +311,11 @@ class Card extends PositionComponent
 
     for (final stackingCardKey in _stackingCardKeys) {
       final stackingCard = game.findByKey<Card>(stackingCardKey);
-      stackingCard?.priority = stackingCard._prevPriority;
+      if (stackingCard == null) continue;
+      stackingCard.priority = stackingCard._prevPriority;
+
+      game.findByKey<ShadowComponent>(stackingCard._shadowKey)?.isEnabled =
+          stackingCard._prevHasShadow;
     }
   }
 

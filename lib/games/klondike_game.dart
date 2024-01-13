@@ -6,9 +6,12 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart' hide Card;
 import '../components/card.dart';
 import '../components/foundation.dart';
+import '../components/foundation_pile.dart';
 import '../components/stock_pile.dart';
 import '../components/tableau.dart';
+import '../components/tableau_pile.dart';
 import '../components/waste_pile.dart';
+import '../consts/index.dart';
 import '../models/card_model.dart';
 import '../models/rank.dart';
 import '../models/suit.dart';
@@ -20,6 +23,32 @@ class KlondikeGame extends FlameGame {
     Card.size_.x * 7 + Card.gap.x * 8,
     Card.size_.y * 2 + Card.gap.y * 3 + Card.stackGap.y * 18,
   );
+
+  final _stockPileKey = ComponentKey.unique();
+
+  var _stockPileCardKeys = [
+    for (var i = 0; i < Suit.values.length * (Rank.max - Rank.min + 1); ++i)
+      ComponentKey.unique()
+  ];
+
+  final _wastePileKey = ComponentKey.unique();
+  var _wastePileCardKeys = <ComponentKey>[];
+
+  final _tableauPileKeys = [
+    for (var i = 0; i < tableauPileCount; ++i) ComponentKey.unique()
+  ];
+
+  final _tableauPilesCardKeys = [
+    for (var i = 0; i < tableauPileCount; ++i) <ComponentKey>[]
+  ];
+
+  final _foundationPileKeys = [
+    for (var i = 0; i < foundationPileCount; ++i) ComponentKey.unique()
+  ];
+
+  final _foundationPilesCardKeys = [
+    for (var i = 0; i < foundationPileCount; ++i) <ComponentKey>[]
+  ];
 
   @override
   Color backgroundColor() => Colors.transparent;
@@ -41,25 +70,15 @@ class KlondikeGame extends FlameGame {
   @override
   FutureOr<void> onLoad() async {
     camera.viewfinder.anchor = Anchor.topLeft;
-    final stockPileKey = ComponentKey.unique();
 
     // Prepare a standard 52-card deck
     final cardModels = [
       for (final suit in Suit.values)
         for (var rank = Rank.min; rank <= Rank.max; ++rank)
-          CardModel(suit: suit, rank: Rank(rank), parentKey: stockPileKey)
+          CardModel(suit: suit, rank: Rank(rank), parentKey: _stockPileKey)
     ];
 
     cardModels.shuffle();
-    var stockPileCardKeys = [for (final _ in cardModels) ComponentKey.unique()];
-    final wastePileKey = ComponentKey.unique();
-    var wastePileCardKeys = <ComponentKey>[];
-    final tableauPileKeys = [for (var i = 0; i < 7; ++i) ComponentKey.unique()];
-
-    final tableauPilesCardKeys = [
-      for (final _ in tableauPileKeys) <ComponentKey>[]
-    ];
-
     late final int maxStockPileCardCount;
 
     world.addAll([
@@ -70,25 +89,25 @@ class KlondikeGame extends FlameGame {
         size: _playingAreaSize,
         children: [
           StockPile(
-            key: stockPileKey,
+            key: _stockPileKey,
             onTapUp: (stockPile) async {
               stockPile.isClickable = false;
 
               // Restock the stock pile from the waste pile
-              wastePileCardKeys.reverse();
-              stockPileCardKeys = wastePileCardKeys;
-              wastePileCardKeys = [];
+              _wastePileCardKeys.reverse();
+              _stockPileCardKeys = _wastePileCardKeys;
+              _wastePileCardKeys = [];
               final effectFutures = <Future<void>>[];
 
-              for (final (i, cardKey) in stockPileCardKeys.indexed) {
+              for (final (i, cardKey) in _stockPileCardKeys.indexed) {
                 final card = findByKey<Card>(cardKey);
-                card?.model.parentKey = stockPileKey;
+                card?.model.parentKey = _stockPileKey;
                 card?.model.isClickable = false;
 
                 effectFutures.addAll([
                   card?.flip(),
                   card?.moveToComponent(
-                    stockPileKey,
+                    _stockPileKey,
                     hasShadow: i == 0,
                     priority: i,
                   ),
@@ -96,178 +115,79 @@ class KlondikeGame extends FlameGame {
               }
 
               await Future.wait(effectFutures);
-              findByKey<Card>(stockPileCardKeys.last)?.model.isClickable = true;
+
+              if (_stockPileCardKeys.lastOrNull != null) {
+                findByKey<Card>(_stockPileCardKeys.last)?.model.isClickable =
+                    true;
+              }
             },
           ),
-          WastePile(key: wastePileKey),
-          Foundation(),
-          Tableau(pileKeys: tableauPileKeys),
-          for (final (i, cardKey) in stockPileCardKeys.indexed)
+          WastePile(key: _wastePileKey),
+          Foundation(pileKeys: _foundationPileKeys),
+          Tableau(pileKeys: _tableauPileKeys),
+          for (final (i, cardKey) in _stockPileCardKeys.indexed)
             Card(
               key: cardKey,
               model: cardModels.removeLast(),
               hasShadow: i == 0,
               onTapUp: (card) async {
-                if (card.model.parentKey != stockPileKey) return;
+                if (card.model.parentKey != _stockPileKey) return;
 
                 // This waste pile card is not draggable due to partially
                 // covered by a new card in the waste pile later
-                if (wastePileCardKeys.lastOrNull != null) {
-                  findByKey<Card>(wastePileCardKeys.last)?.model.isDraggable =
+                if (_wastePileCardKeys.lastOrNull != null) {
+                  findByKey<Card>(_wastePileCardKeys.last)?.model.isDraggable =
                       false;
                 }
 
                 // Top-most card from the stock pile reveals to the waste pile
-                wastePileCardKeys.add(stockPileCardKeys.removeLast());
-                card.model.parentKey = wastePileKey;
+                _wastePileCardKeys.add(_stockPileCardKeys.removeLast());
+                card.model.parentKey = _wastePileKey;
 
                 await Future.wait([
                   card.flip(),
-                  if (wastePileCardKeys.length > 3)
+                  if (_wastePileCardKeys.length > 3)
                     for (var i = 0; i < 2; ++i)
                       findByKey<Card>(
-                            wastePileCardKeys[wastePileCardKeys.length - 3 + i],
-                          )?.moveToComponent(
-                            wastePileKey,
-                            offset: Vector2(i * Card.stackGap.x, 0),
-                            hasShadow: i > 0,
-                          ) ??
-                          Future.value(),
+                        _wastePileCardKeys[_wastePileCardKeys.length - 3 + i],
+                      )?.moveToComponent(
+                        _wastePileKey,
+                        offset: Vector2(i * Card.stackGap.x, 0),
+                        hasShadow: i > 0,
+                      ),
                   card.moveToComponent(
-                    wastePileKey,
+                    _wastePileKey,
                     offset: Vector2(
-                      Card.stackGap.x * (min(wastePileCardKeys.length - 1, 2)),
+                      Card.stackGap.x * (min(_wastePileCardKeys.length - 1, 2)),
                       0,
                     ),
-                    priority: maxStockPileCardCount + wastePileCardKeys.length,
+                    priority: maxStockPileCardCount + _wastePileCardKeys.length,
+                    hasShadow: true,
                   ),
-                ]);
+                ].nonNulls);
 
                 // User can drag the top-most card in the waste pile
                 card.model.isDraggable = true;
 
-                final stockPileCardKey = stockPileCardKeys.lastOrNull;
-
-                if (stockPileCardKey != null) {
-                  findByKey<Card>(stockPileCardKey)?.model.isClickable = true;
+                if (_stockPileCardKeys.lastOrNull != null) {
+                  findByKey<Card>(_stockPileCardKeys.last)?.model.isClickable =
+                      true;
                 } else {
-                  findByKey<StockPile>(stockPileKey)?.isClickable = true;
+                  findByKey<StockPile>(_stockPileKey)?.isClickable = true;
                 }
               },
-              tryStack: (stackedCard) async {
-                final dstTableauPileKeyIndex =
-                    tableauPileKeys.indexOf(stackedCard.model.parentKey);
+              tryStackCard: (stackedCard) async {
+                return await _tryStackPile(cardKey, stackedCard);
+              },
+              tryStackComponents: (stackedComponents) async {
+                final stackedPile = stackedComponents
+                        .whereType<TableauPile>()
+                        .firstOrNull ??
+                    stackedComponents.whereType<FoundationPile>().firstOrNull;
 
-                // Only can stack on top of the bottom-most card in the tableau
-                // pile
-                if (dstTableauPileKeyIndex < 0 ||
-                    stackedCard.key !=
-                        tableauPilesCardKeys[dstTableauPileKeyIndex].last) {
-                  return false;
-                }
-
-                final card = findByKey<Card>(cardKey);
-
-                // The card must exist, otherwise probably programming errors.
-                if (card == null) return false;
-
-                // Is stackable according to the classic Klondike game rules ?
-                if (!card.model.isStackable(stackedCard.model)) return false;
-
-                final effectFutures = <Future<void>>[];
-                void Function()? onEffectsDone;
-
-                // The card is coming from the waste pile ?
-                if (card.model.parentKey == wastePileKey) {
-                  // Only the top-most waste pile card can be removed. So can
-                  // assume always remove the last card key
-                  tableauPilesCardKeys[dstTableauPileKeyIndex]
-                      .add(wastePileCardKeys.removeLast());
-
-                  if (wastePileCardKeys.lastOrNull != null) {
-                    onEffectsDone = () {
-                      findByKey<Card>(wastePileCardKeys.last)
-                          ?.model
-                          .isDraggable = true;
-                    };
-                  }
-                } else {
-                  // The card is coming from the tableau pile
-                  final srcTableauPileCardKeys = tableauPilesCardKeys[
-                      tableauPileKeys.indexOf(card.model.parentKey)];
-
-                  // Move the bottom section of cards between tableau piles
-                  final srcTableauPileCardKeyIndex =
-                      srcTableauPileCardKeys.indexOf(cardKey);
-
-                  tableauPilesCardKeys[dstTableauPileKeyIndex].addAll(
-                    srcTableauPileCardKeys.getRange(
-                      srcTableauPileCardKeyIndex,
-                      srcTableauPileCardKeys.length,
-                    ),
-                  );
-
-                  srcTableauPileCardKeys.removeRange(
-                    srcTableauPileCardKeyIndex,
-                    srcTableauPileCardKeys.length,
-                  );
-
-                  if (srcTableauPileCardKeys.lastOrNull != null) {
-                    final lastSrcTableauPileCard =
-                        findByKey<Card>(srcTableauPileCardKeys.last);
-
-                    if (lastSrcTableauPileCard?.model.isFaceUp == false) {
-                      // Reveal the next bottom-most card in the tableau pile
-                      effectFutures.add(
-                        lastSrcTableauPileCard?.flip() ?? Future.value(),
-                      );
-
-                      onEffectsDone = () {
-                        lastSrcTableauPileCard?.model.isDraggable = true;
-                      };
-                    }
-                  }
-                }
-
-                final dstTableauPileCardKeyIndex =
-                    tableauPilesCardKeys[dstTableauPileKeyIndex]
-                        .indexOf(cardKey);
-
-                final cardKeys =
-                    tableauPilesCardKeys[dstTableauPileKeyIndex].getRange(
-                  dstTableauPileCardKeyIndex,
-                  tableauPilesCardKeys[dstTableauPileKeyIndex].length,
-                );
-
-                effectFutures.addAll([
-                  if (card.model.parentKey == wastePileKey &&
-                      wastePileCardKeys.length >= 3)
-                    for (var i = 0; i < 2; ++i)
-                      findByKey<Card>(
-                        wastePileCardKeys[wastePileCardKeys.length - 2 + i],
-                      )?.moveToComponent(
-                        wastePileKey,
-                        offset: Vector2(Card.stackGap.x * (i + 1), 0),
-                      ),
-                  for (final (i, cardKey) in cardKeys.indexed)
-                    findByKey<Card>(cardKey)?.moveToComponent(
-                      tableauPileKeys[dstTableauPileKeyIndex],
-                      offset: Vector2(
-                        0,
-                        Card.stackGap.y * (dstTableauPileCardKeyIndex + i),
-                      ),
-                      priority: stackedCard.priority + 1 + i,
-                    ),
-                ].nonNulls);
-
-                for (final cardKey in cardKeys) {
-                  findByKey<Card>(cardKey)?.model.parentKey =
-                      tableauPileKeys[dstTableauPileKeyIndex];
-                }
-
-                await Future.wait(effectFutures);
-                onEffectsDone?.call();
-                return true;
+                return stackedPile != null
+                    ? await _tryStackPile(cardKey, stackedPile)
+                    : false;
               },
               findStackingCardKeys: () {
                 final card = findByKey<Card>(cardKey);
@@ -275,7 +195,7 @@ class KlondikeGame extends FlameGame {
                 // The card must exist, otherwise probably programming errors.
                 if (card == null) return [cardKey];
 
-                final tableauPileKeyIndex = tableauPileKeys.indexOf(
+                final tableauPileKeyIndex = _tableauPileKeys.indexOf(
                   card.model.parentKey,
                 );
 
@@ -283,11 +203,11 @@ class KlondikeGame extends FlameGame {
                 // any stacking cards following this card.
                 if (tableauPileKeyIndex < 0) return [cardKey];
 
-                return tableauPilesCardKeys[tableauPileKeyIndex]
+                return _tableauPilesCardKeys[tableauPileKeyIndex]
                     .getRange(
-                      tableauPilesCardKeys[tableauPileKeyIndex]
+                      _tableauPilesCardKeys[tableauPileKeyIndex]
                           .indexOf(cardKey),
-                      tableauPilesCardKeys[tableauPileKeyIndex].length,
+                      _tableauPilesCardKeys[tableauPileKeyIndex].length,
                     )
                     .toList();
               },
@@ -304,38 +224,280 @@ class KlondikeGame extends FlameGame {
 
           // Start laying out cards from the stock pile into tableau
           var i = 0;
-          for (var j = 0; j < tableauPileKeys.length; ++j) {
-            for (var k = j; k < tableauPileKeys.length; ++k) {
-              final cardKey = stockPileCardKeys.removeLast();
-              tableauPilesCardKeys[k].add(cardKey);
+          for (var j = 0; j < _tableauPileKeys.length; ++j) {
+            for (var k = j; k < _tableauPileKeys.length; ++k) {
+              final cardKey = _stockPileCardKeys.removeLast();
+              _tableauPilesCardKeys[k].add(cardKey);
               final card = findByKey<Card>(cardKey);
-              card?.model.parentKey = tableauPileKeys[k];
+              card?.model.parentKey = _tableauPileKeys[k];
 
               await card?.moveToComponent(
-                tableauPileKeys[k],
+                _tableauPileKeys[k],
                 offset: Vector2(0, Card.stackGap.y * j),
                 priority: i,
+                hasShadow: true,
               );
 
               ++i;
             }
           }
 
-          maxStockPileCardCount = stockPileCardKeys.length;
+          maxStockPileCardCount = _stockPileCardKeys.length;
 
           // Flip bottom-most card from each tableau pile
-          for (final tableauPileCardKeys in tableauPilesCardKeys) {
+          for (final tableauPileCardKeys in _tableauPilesCardKeys) {
             await findByKey<Card>(tableauPileCardKeys.last)?.flip();
           }
 
           // User can start playing the game
-          findByKey<Card>(stockPileCardKeys.last)?.model.isClickable = true;
+          findByKey<Card>(_stockPileCardKeys.last)?.model.isClickable = true;
 
-          for (final tableauPileCardKeys in tableauPilesCardKeys) {
+          for (final tableauPileCardKeys in _tableauPilesCardKeys) {
             findByKey<Card>(tableauPileCardKeys.last)?.model.isDraggable = true;
           }
         },
       ),
     ]);
+  }
+
+  Future<bool> _tryStackPile(
+    ComponentKey stackingCardKey,
+    PositionComponent stackedComponent,
+  ) async {
+    final stackingCard = findByKey<Card>(stackingCardKey);
+
+    // The card must exist, otherwise probably programming errors.
+    if (stackingCard == null) return false;
+
+    final int dstPileKeyIndex;
+    final List<List<ComponentKey>> pilesCardKeys;
+
+    switch (stackedComponent) {
+      case Card(): // Actually stack on top of the card ?
+        final stackedCard = stackedComponent;
+        final List<ComponentKey> pileKeys;
+
+        final bool Function(
+          CardModel stackingCardModel,
+          CardModel stackedCardModel,
+        ) isStackable;
+
+        // The stacked card belongs to the tableau pile ?
+        if (_tableauPileKeys.contains(stackedCard.model.parentKey)) {
+          pileKeys = _tableauPileKeys;
+          pilesCardKeys = _tableauPilesCardKeys;
+          isStackable = TableauPile.isStackable;
+
+          // The stacked card belongs to the foundation pile ?
+        } else if (_foundationPileKeys.contains(stackedCard.model.parentKey)) {
+          pileKeys = _foundationPileKeys;
+          pilesCardKeys = _foundationPilesCardKeys;
+          isStackable = FoundationPile.isStackable;
+
+          // Maybe we try to stack the card on top of the stock pile, waste pile
+          // or etc which is not allowed
+        } else {
+          return false;
+        }
+
+        dstPileKeyIndex = pileKeys.indexOf(stackedCard.model.parentKey);
+
+        // Only can stack on top of the bottom-most card in the tableau pile or
+        // top-most card in the foundation pile
+        if (dstPileKeyIndex < 0 ||
+            stackedCard.key != pilesCardKeys[dstPileKeyIndex].last) {
+          return false;
+        }
+
+        // Is stackable according to the classic Klondike game rules ?
+        if (!isStackable(stackingCard.model, stackedCard.model)) return false;
+
+      case TableauPile(): // Actually stack on top of the empty tableau pile ?
+        // Is stackable according to the classic Klondike game rules ?
+        if (!TableauPile.isStackableBy(stackingCard.model)) return false;
+
+        final stackedTableauPile = stackedComponent;
+        dstPileKeyIndex = _tableauPileKeys.indexOf(stackedTableauPile.key);
+        pilesCardKeys = _tableauPilesCardKeys;
+
+      // Actually stack on top of the empty foundation pile ?
+      case FoundationPile():
+        final stackedFoundationPile = stackedComponent;
+
+        // Is stackable according to the classic Klondike game rules ?
+        if (!stackedFoundationPile.isStackableBy(stackingCard.model)) {
+          return false;
+        }
+
+        dstPileKeyIndex =
+            _foundationPileKeys.indexOf(stackedFoundationPile.key);
+
+        pilesCardKeys = _foundationPilesCardKeys;
+
+      default:
+        // Maybe we try to stack the card on top of the stock pile, waste pile
+        // or etc which is not allowed
+        return false;
+    }
+
+    final effectFutures = <Future<void>>[];
+    void Function()? onEffectsDone;
+
+    // The card is coming from the waste pile ?
+    if (stackingCard.model.parentKey == _wastePileKey) {
+      // Only the top-most waste pile card can be removed. So can assume always
+      // remove the last card key
+      pilesCardKeys[dstPileKeyIndex].add(_wastePileCardKeys.removeLast());
+
+      if (_wastePileCardKeys.lastOrNull != null) {
+        onEffectsDone = () {
+          findByKey<Card>(_wastePileCardKeys.last)?.model.isDraggable = true;
+        };
+      }
+
+      // The card is coming from the tableau pile ?
+    } else if (_tableauPileKeys.contains(stackingCard.model.parentKey)) {
+      final srcPileKeyIndex =
+          _tableauPileKeys.indexOf(stackingCard.model.parentKey);
+
+      final srcTableauPileCardKeys = _tableauPilesCardKeys[srcPileKeyIndex];
+
+      final srcTableauPileCardKeyIndex =
+          srcTableauPileCardKeys.indexOf(stackingCardKey);
+
+      // Actually stack on top of the tableau pile
+      if (pilesCardKeys == _tableauPilesCardKeys) {
+        // Move the bottom section of cards between tableau piles
+        if (srcPileKeyIndex != dstPileKeyIndex) {
+          _tableauPilesCardKeys[dstPileKeyIndex].addAll(
+            srcTableauPileCardKeys.getRange(
+              srcTableauPileCardKeyIndex,
+              srcTableauPileCardKeys.length,
+            ),
+          );
+
+          srcTableauPileCardKeys.removeRange(
+            srcTableauPileCardKeyIndex,
+            srcTableauPileCardKeys.length,
+          );
+        }
+
+        // Actually stack on top of the foundation pile
+      } else {
+        if (srcTableauPileCardKeyIndex < srcTableauPileCardKeys.length - 1) {
+          // Cannot stack multiple cards on top of the foundation pile
+          // according to the classic Klondike game rules
+          return false;
+        }
+
+        // Only the bottom-most tableau pile card can be removed. So can assume
+        // always remove the last card key.
+        _foundationPilesCardKeys[dstPileKeyIndex].add(
+          srcTableauPileCardKeys.removeLast(),
+        );
+      }
+
+      if (srcTableauPileCardKeys.lastOrNull != null) {
+        final lastSrcTableauPileCard =
+            findByKey<Card>(srcTableauPileCardKeys.last);
+
+        if (lastSrcTableauPileCard?.model.isFaceUp == false) {
+          // Reveal the next bottom-most card in the tableau pile
+          effectFutures.add(
+            lastSrcTableauPileCard?.flip() ?? Future.value(),
+          );
+
+          onEffectsDone = () {
+            lastSrcTableauPileCard?.model.isDraggable = true;
+          };
+        }
+      }
+
+      // The card is coming from the foundation pile
+      // Actually stack on top of the tableau pile
+    } else if (pilesCardKeys == _tableauPilesCardKeys) {
+      // Move the card back to the tableau pile.
+      final srcFoundationPileCardKeys = _foundationPilesCardKeys[
+          _foundationPileKeys.indexOf(stackingCard.model.parentKey)];
+
+      // Only the top-most foundation pile card can be removed. So can assume
+      // always remove the last card key.
+      _tableauPilesCardKeys[dstPileKeyIndex].add(
+        srcFoundationPileCardKeys.removeLast(),
+      );
+
+      if (srcFoundationPileCardKeys.lastOrNull != null) {
+        findByKey<Card>(srcFoundationPileCardKeys.last)?.model.isDraggable =
+            true;
+      }
+
+      // The card is coming from the foundation pile
+      // Actually stack on top of the foundation pile
+    } else {
+      // The stacking card is already in the foundation pile and no actions
+      // should be done according to the classic Klondike game rules, so
+      // considered failed to stack to return back to the previous position
+      return false;
+    }
+
+    effectFutures.addAll([
+      if (stackingCard.model.parentKey == _wastePileKey &&
+          _wastePileCardKeys.length >= 3)
+        for (var i = 0; i < 2; ++i)
+          findByKey<Card>(
+            _wastePileCardKeys[_wastePileCardKeys.length - 2 + i],
+          )?.moveToComponent(
+            _wastePileKey,
+            offset: Vector2(Card.stackGap.x * (i + 1), 0),
+            hasShadow: true,
+          ),
+    ].nonNulls);
+
+    // Actually stack on top of the tableau pile
+    if (pilesCardKeys == _tableauPilesCardKeys) {
+      final dstTableauPileCardKeyIndex =
+          _tableauPilesCardKeys[dstPileKeyIndex].indexOf(stackingCardKey);
+
+      final stackingCardKeys = _tableauPilesCardKeys[dstPileKeyIndex].getRange(
+        dstTableauPileCardKeyIndex,
+        _tableauPilesCardKeys[dstPileKeyIndex].length,
+      );
+
+      effectFutures.addAll([
+        for (final (i, stackingCardKey) in stackingCardKeys.indexed)
+          findByKey<Card>(stackingCardKey)?.moveToComponent(
+            _tableauPileKeys[dstPileKeyIndex],
+            offset: Vector2(
+              0,
+              Card.stackGap.y * (dstTableauPileCardKeyIndex + i),
+            ),
+            priority: stackedComponent.priority + 1 + i,
+            hasShadow: true,
+          ),
+      ].nonNulls);
+
+      for (final stackingCardKey in stackingCardKeys) {
+        findByKey<Card>(stackingCardKey)?.model.parentKey =
+            _tableauPileKeys[dstPileKeyIndex];
+      }
+
+      // Actually stack on top of the foundation pile
+    } else {
+      if (stackedComponent is Card) stackedComponent.model.isDraggable = false;
+
+      effectFutures.add(
+        stackingCard.moveToComponent(
+          _foundationPileKeys[dstPileKeyIndex],
+          hasShadow: _foundationPilesCardKeys[dstPileKeyIndex].length == 1,
+          priority: stackedComponent.priority + 1,
+        ),
+      );
+
+      stackingCard.model.parentKey = _foundationPileKeys[dstPileKeyIndex];
+    }
+
+    await Future.wait(effectFutures);
+    onEffectsDone?.call();
+    return true;
   }
 }
