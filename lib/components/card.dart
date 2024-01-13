@@ -25,7 +25,11 @@ class Card extends PositionComponent
 
   // Callbacks
   final void Function(Card card) _onTapUp;
-  final Future<bool> Function(Card stackedCard) _tryStack;
+  final Future<bool> Function(Card stackedCard) _tryStackCard;
+
+  final Future<bool> Function(Iterable<Component> stackedComponents)
+      _tryStackComponents;
+
   final List<ComponentKey> Function() _findStackingCardKeys;
 
   // Component keys
@@ -41,10 +45,14 @@ class Card extends PositionComponent
     required this.model,
     this.hasShadow = false,
     void Function(Card card)? onTapUp,
-    Future<bool> Function(Card stackedCard)? tryStack,
+    Future<bool> Function(Card stackedCard)? tryStackCard,
+    Future<bool> Function(Iterable<Component> stackedComponents)?
+        tryStackComponents,
     List<ComponentKey> Function()? findStackingCardKeys,
   })  : _onTapUp = onTapUp ?? ((card) {}),
-        _tryStack = tryStack ?? ((stackedCard) => Future.value(false)),
+        _tryStackCard = tryStackCard ?? ((stackedCard) => Future.value(false)),
+        _tryStackComponents =
+            tryStackComponents ?? ((stackedComponents) => Future.value(false)),
         _findStackingCardKeys = findStackingCardKeys ?? (() => []),
         super(
           key: key,
@@ -249,18 +257,24 @@ class Card extends PositionComponent
     if (!isDragged) return;
     super.onDragEnd(event);
 
-    final stackedCard = game
-        .findByKey<PositionComponent>(game.playingAreaKey)
-        ?.componentsAtPoint(
-          position -
-              (_stackingCardKeys.length == 1
-                  ? Vector2.zero()
-                  : Vector2(0, (size.y - Card.stackGap.y) * 0.5)),
-        )
-        .whereType<Card>()
-        .elementAtOrNull(1);
+    final stackedComponents = game
+            .findByKey<PositionComponent>(game.playingAreaKey)
+            ?.componentsAtPoint(
+              position -
+                  (_stackingCardKeys.length == 1
+                      ? Vector2.zero()
+                      : Vector2(0, (size.y - Card.stackGap.y) * 0.5)),
+            ) ??
+        [];
 
-    if (stackedCard == null || !await _tryStack(stackedCard)) {
+    final stackedCard = stackedComponents.whereType<Card>().elementAtOrNull(1);
+
+    if (stackedCard != null) {
+      if (!await _tryStackCard(stackedCard)) {
+        // Failed to stack the card
+        await _returnBack();
+      }
+    } else if (!await _tryStackComponents(stackedComponents)) {
       // Failed to stack the card
       await _returnBack();
     }

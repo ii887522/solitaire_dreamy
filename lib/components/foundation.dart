@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flame/components.dart';
+import '../models/suit.dart';
 import 'card.dart';
 import 'foundation_pile.dart';
 
@@ -13,15 +14,10 @@ class Foundation extends PositionComponent {
   @override
   FutureOr<void> onLoad() {
     addAll([
-      for (final (i, iconFileName) in [
-        'icons/spade.svg',
-        'icons/heart.svg',
-        'icons/club.svg',
-        'icons/diamond.svg',
-      ].indexed)
+      for (final (i, suit) in Suit.values.indexed)
         FoundationPile(
           position: Vector2((Card.size_.x + Card.gap.x) * i, 0),
-          iconFileName: iconFileName,
+          suit: suit,
         ),
     ]);
   }
