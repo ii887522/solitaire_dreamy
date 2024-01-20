@@ -18,10 +18,8 @@ class Card extends PositionComponent
   static Vector2 get stackGap => Vector2.all(14);
   static const cornerRadius = 4.0;
 
-  final ComponentKey key;
   final CardModel model;
   final bool hasShadow;
-  var _stackingCardKeys = <ComponentKey>[];
 
   // Callbacks
   final void Function(Card card) _onTapUp;
@@ -30,7 +28,7 @@ class Card extends PositionComponent
   final Future<bool> Function(Iterable<Component> stackedComponents)
       _tryStackComponents;
 
-  final List<ComponentKey> Function() _findStackingCardKeys;
+  final List<CardModel> Function() _findStackingCards;
 
   // Component keys
   final _shadowKey = ComponentKey.unique();
@@ -42,22 +40,21 @@ class Card extends PositionComponent
   bool _prevHasShadow;
 
   Card({
-    required this.key,
     required this.model,
     this.hasShadow = false,
     void Function(Card card)? onTapUp,
     Future<bool> Function(Card stackedCard)? tryStackCard,
     Future<bool> Function(Iterable<Component> stackedComponents)?
         tryStackComponents,
-    List<ComponentKey> Function()? findStackingCardKeys,
+    List<CardModel> Function()? findStackingCards,
   })  : _onTapUp = onTapUp ?? ((card) {}),
         _tryStackCard = tryStackCard ?? ((stackedCard) => Future.value(false)),
         _tryStackComponents =
             tryStackComponents ?? ((stackedComponents) => Future.value(false)),
-        _findStackingCardKeys = findStackingCardKeys ?? (() => []),
+        _findStackingCards = findStackingCards ?? (() => []),
         _prevHasShadow = hasShadow,
         super(
-          key: key,
+          key: model.key,
           anchor: Anchor.center,
           position: gap + size_ * 0.5,
           size: size_,
@@ -133,7 +130,6 @@ class Card extends PositionComponent
   }
 
   Future<void> flip() {
-    model.isFaceUp = !model.isFaceUp;
     final completer = Completer<void>();
 
     add(
@@ -237,14 +233,15 @@ class Card extends PositionComponent
 
   @override
   void onDragStart(DragStartEvent event) {
-    if (!model.isDraggable) return;
+    if (game.model.isDraggingCard || !model.isDraggable) return;
     super.onDragStart(event);
-    _stackingCardKeys = _findStackingCardKeys();
+    game.model.isDraggingCard = true;
+    model.stackingCards = _findStackingCards();
 
-    for (final (i, stackingCardKey) in _stackingCardKeys.indexed) {
-      final stackingCard = game.findByKey<Card>(stackingCardKey);
+    for (final (i, stackingCardModel) in model.stackingCards.indexed) {
+      final stackingCard = game.findByKey<Card>(stackingCardModel.key);
       if (stackingCard == null) continue;
-      stackingCard.model.isDraggable = false;
+      stackingCardModel.isDraggable = false;
       stackingCard._prevPriority = stackingCard.priority;
       stackingCard.priority = 100 + i;
       final shadow = game.findByKey<ShadowComponent>(stackingCard._shadowKey);
@@ -257,8 +254,8 @@ class Card extends PositionComponent
   void onDragUpdate(DragUpdateEvent event) {
     if (!isDragged) return;
 
-    for (final stackingCardKey in _stackingCardKeys) {
-      game.findByKey<Card>(stackingCardKey)?.position += event.localDelta;
+    for (final stackingCard in model.stackingCards) {
+      game.findByKey<Card>(stackingCard.key)?.position += event.localDelta;
     }
   }
 
@@ -271,7 +268,7 @@ class Card extends PositionComponent
             .findByKey<PositionComponent>(game.playingAreaKey)
             ?.componentsAtPoint(
               position -
-                  (_stackingCardKeys.length == 1
+                  (model.stackingCards.length == 1
                       ? Vector2.zero()
                       : Vector2(0, (size.y - Card.stackGap.y) * 0.5)),
             ) ??
@@ -289,18 +286,18 @@ class Card extends PositionComponent
       await _returnBack();
     }
 
-    _allowDrag();
+    model.allowDrag();
   }
 
   Future<void> _returnBack() async {
     final effectFutures = <Future<void>>[];
 
-    for (final stackingCardKey in _stackingCardKeys) {
-      final stackingCard = game.findByKey<Card>(stackingCardKey);
+    for (final stackingCardModel in model.stackingCards) {
+      final stackingCard = game.findByKey<Card>(stackingCardModel.key);
 
       effectFutures.add(
         stackingCard?.moveToComponent(
-              stackingCard.model.parentKey,
+              stackingCardModel.parentKey,
               offset: stackingCard._prevOffset,
             ) ??
             Future.value(),
@@ -309,19 +306,13 @@ class Card extends PositionComponent
 
     await Future.wait(effectFutures);
 
-    for (final stackingCardKey in _stackingCardKeys) {
-      final stackingCard = game.findByKey<Card>(stackingCardKey);
+    for (final stackingCardModel in model.stackingCards) {
+      final stackingCard = game.findByKey<Card>(stackingCardModel.key);
       if (stackingCard == null) continue;
       stackingCard.priority = stackingCard._prevPriority;
 
       game.findByKey<ShadowComponent>(stackingCard._shadowKey)?.isEnabled =
           stackingCard._prevHasShadow;
-    }
-  }
-
-  void _allowDrag() {
-    for (final stackingCardKey in _stackingCardKeys) {
-      game.findByKey<Card>(stackingCardKey)?.model.isDraggable = true;
     }
   }
 }
