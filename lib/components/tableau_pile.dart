@@ -3,30 +3,14 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart' hide Card;
 import '../consts/index.dart';
 import '../extensions/platform_ext.dart';
-import '../models/card_model.dart';
-import '../models/rank.dart';
+import '../models/tableau_pile_model.dart';
 import 'card.dart';
 
 class TableauPile extends PositionComponent {
-  final ComponentKey key;
+  final TableauPileModel model;
 
-  TableauPile({required this.key, super.position})
-      : super(key: key, size: Card.size_);
-
-  static bool isStackableBy(CardModel stackingCardModel) {
-    // Follow the classic Klondike game rules
-    return stackingCardModel.rank.value == Rank.max;
-  }
-
-  static bool isStackable(
-    CardModel stackingCardModel,
-    CardModel stackedCardModel,
-  ) {
-    // Follow the classic Klondike game rules
-    return stackingCardModel.suit.toColor() !=
-            stackedCardModel.suit.toColor() &&
-        stackingCardModel.rank.value + 1 == stackedCardModel.rank.value;
-  }
+  TableauPile({required this.model, super.position})
+      : super(key: model.key, size: Card.size_);
 
   @override
   FutureOr<void> onLoad() async {

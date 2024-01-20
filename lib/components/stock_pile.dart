@@ -3,15 +3,16 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame_svg/flame_svg.dart';
 import '../consts/index.dart';
+import '../models/stock_pile_model.dart';
 import 'card.dart';
 
 class StockPile extends PositionComponent with TapCallbacks {
-  var isClickable = false;
-  final void Function(StockPile stockPile) _onTapUp;
+  final StockPileModel model;
+  final void Function() _onTapUp;
 
-  StockPile({super.key, void Function(StockPile stockPile)? onTapUp})
-      : _onTapUp = onTapUp ?? ((stockPile) {}),
-        super(position: Card.gap, size: Card.size_);
+  StockPile({required this.model, void Function()? onTapUp})
+      : _onTapUp = onTapUp ?? (() {}),
+        super(key: model.key, position: Card.gap, size: Card.size_);
 
   @override
   FutureOr<void> onLoad() async {
@@ -29,6 +30,6 @@ class StockPile extends PositionComponent with TapCallbacks {
 
   @override
   void onTapUp(TapUpEvent event) {
-    if (isClickable) _onTapUp(this);
+    if (model.isClickable) _onTapUp();
   }
 }
