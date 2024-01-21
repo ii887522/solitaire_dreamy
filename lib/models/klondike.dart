@@ -74,6 +74,7 @@ class Klondike {
 
     for (final card in stockPileCards) {
       card.isClickable = false;
+      card.isDraggable = false;
       card.parentKey = stockPile.key;
       card.isFaceUp = !card.isFaceUp;
     }
