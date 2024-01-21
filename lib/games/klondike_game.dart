@@ -47,8 +47,11 @@ class KlondikeGame extends FlameGame {
   @override
   FutureOr<void> onLoad() async {
     // Preload audio files to avoid lagging sound
-    await FlameAudio.audioCache.loadAll(['flip_card.mp3', 'move_card.mp3']);
+    await FlameAudio.audioCache
+        .loadAll(['bgm.mp3', 'flip_card.mp3', 'move_card.mp3']);
 
+    FlameAudio.bgm.initialize();
+    FlameAudio.bgm.play('bgm.mp3', volume: 0.25);
     model.load();
     camera.viewfinder.anchor = Anchor.topLeft;
     late final int maxStockPileCardCount;
@@ -338,5 +341,8 @@ class KlondikeGame extends FlameGame {
   }
 
   @override
-  void onRemove() async => await FlameAudio.audioCache.clearAll();
+  void onRemove() async {
+    FlameAudio.bgm.dispose();
+    await FlameAudio.audioCache.clearAll();
+  }
 }
