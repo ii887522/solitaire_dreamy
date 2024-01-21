@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_svg/flame_svg.dart';
 import 'package:flutter/material.dart';
 import '../extensions/platform_ext.dart';
@@ -18,6 +19,7 @@ class Card extends PositionComponent
   static Vector2 get stackGap => Vector2.all(14);
   static const cornerRadius = 4.0;
 
+  static var _playingFlipSoundCount = 0;
   final CardModel model;
   final bool hasShadow;
 
@@ -121,7 +123,7 @@ class Card extends PositionComponent
         (componentAbsolutePosition - playingAreaPosition) / playingAreaScale +
             size * 0.5 +
             offset,
-        EffectController(duration: 0.1, curve: Curves.easeOut),
+        EffectController(duration: 0.2, curve: Curves.easeOut),
         onComplete: () => completer.complete(),
       ),
     );
@@ -129,15 +131,15 @@ class Card extends PositionComponent
     return completer.future;
   }
 
-  Future<void> flip() {
+  Future<void> flip() async {
     final completer = Completer<void>();
 
     add(
       ScaleEffect.by(
         Vector2(0.01, 1),
         EffectController(
-          duration: 0.05,
-          reverseDuration: 0.05,
+          duration: 0.1,
+          reverseDuration: 0.1,
           curve: Curves.easeOutSine,
           reverseCurve: Curves.easeInSine,
           onMax: () async {
@@ -222,6 +224,15 @@ class Card extends PositionComponent
         onComplete: () => completer.complete(),
       ),
     );
+
+    // Prevent delayed and explosive flip card sounds
+    if (_playingFlipSoundCount == 5) return completer.future;
+    ++_playingFlipSoundCount;
+
+    (await FlameAudio.play('flip_card.mp3'))
+        .onPlayerComplete
+        .first
+        .then((_) => --_playingFlipSoundCount);
 
     return completer.future;
   }
