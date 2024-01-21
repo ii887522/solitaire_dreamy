@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/game.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart' hide Card;
 import '../components/card.dart';
 import '../components/foundation.dart';
@@ -45,6 +46,12 @@ class KlondikeGame extends FlameGame {
 
   @override
   FutureOr<void> onLoad() async {
+    // Preload audio files to avoid lagging sound
+    await FlameAudio.audioCache
+        .loadAll(['bgm.mp3', 'flip_card.mp3', 'move_card.mp3']);
+
+    FlameAudio.bgm.initialize();
+    FlameAudio.bgm.play('bgm.mp3', volume: 0.25);
     model.load();
     camera.viewfinder.anchor = Anchor.topLeft;
     late final int maxStockPileCardCount;
@@ -331,5 +338,11 @@ class KlondikeGame extends FlameGame {
     await Future.wait(effectFutures);
     onEffectsDone?.call();
     return true;
+  }
+
+  @override
+  void onRemove() async {
+    FlameAudio.bgm.dispose();
+    await FlameAudio.audioCache.clearAll();
   }
 }

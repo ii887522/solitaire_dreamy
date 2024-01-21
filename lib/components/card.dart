@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame_svg/flame_svg.dart';
 import 'package:flutter/material.dart';
+import '../common/throttled_audio.dart';
 import '../extensions/platform_ext.dart';
 import '../games/klondike_game.dart';
 import '../models/card_model.dart';
@@ -17,6 +18,10 @@ class Card extends PositionComponent
   static Vector2 get size_ => Vector2(46, 70);
   static Vector2 get stackGap => Vector2.all(14);
   static const cornerRadius = 4.0;
+
+  // Prevent delayed and explosive sounds
+  static final _flipSound = ThrottledAudio('flip_card.mp3', limit: 5);
+  static final _moveSound = ThrottledAudio('move_card.mp3', limit: 2);
 
   final CardModel model;
   final bool hasShadow;
@@ -121,23 +126,24 @@ class Card extends PositionComponent
         (componentAbsolutePosition - playingAreaPosition) / playingAreaScale +
             size * 0.5 +
             offset,
-        EffectController(duration: 0.1, curve: Curves.easeOut),
+        EffectController(duration: 0.2, curve: Curves.easeOut),
         onComplete: () => completer.complete(),
       ),
     );
 
+    _moveSound.play(volume: 0.25);
     return completer.future;
   }
 
-  Future<void> flip() {
+  Future<void> flip() async {
     final completer = Completer<void>();
 
     add(
       ScaleEffect.by(
         Vector2(0.01, 1),
         EffectController(
-          duration: 0.05,
-          reverseDuration: 0.05,
+          duration: 0.1,
+          reverseDuration: 0.1,
           curve: Curves.easeOutSine,
           reverseCurve: Curves.easeInSine,
           onMax: () async {
@@ -223,6 +229,7 @@ class Card extends PositionComponent
       ),
     );
 
+    _flipSound.play();
     return completer.future;
   }
 
