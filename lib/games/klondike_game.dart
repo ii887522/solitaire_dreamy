@@ -47,7 +47,7 @@ class KlondikeGame extends FlameGame {
   @override
   FutureOr<void> onLoad() async {
     // Preload audio files to avoid lagging sound
-    await FlameAudio.audioCache.load('flip_card.mp3');
+    await FlameAudio.audioCache.loadAll(['flip_card.mp3', 'move_card.mp3']);
 
     model.load();
     camera.viewfinder.anchor = Anchor.topLeft;

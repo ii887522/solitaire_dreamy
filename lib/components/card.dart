@@ -3,9 +3,9 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:flame_svg/flame_svg.dart';
 import 'package:flutter/material.dart';
+import '../common/throttled_audio.dart';
 import '../extensions/platform_ext.dart';
 import '../games/klondike_game.dart';
 import '../models/card_model.dart';
@@ -19,7 +19,10 @@ class Card extends PositionComponent
   static Vector2 get stackGap => Vector2.all(14);
   static const cornerRadius = 4.0;
 
-  static var _playingFlipSoundCount = 0;
+  // Prevent delayed and explosive sounds
+  static final _flipSound = ThrottledAudio('flip_card.mp3', limit: 5);
+  static final _moveSound = ThrottledAudio('move_card.mp3', limit: 2);
+
   final CardModel model;
   final bool hasShadow;
 
@@ -128,6 +131,7 @@ class Card extends PositionComponent
       ),
     );
 
+    _moveSound.play(volume: 0.25);
     return completer.future;
   }
 
@@ -225,15 +229,7 @@ class Card extends PositionComponent
       ),
     );
 
-    // Prevent delayed and explosive flip card sounds
-    if (_playingFlipSoundCount == 5) return completer.future;
-    ++_playingFlipSoundCount;
-
-    (await FlameAudio.play('flip_card.mp3'))
-        .onPlayerComplete
-        .first
-        .then((_) => --_playingFlipSoundCount);
-
+    _flipSound.play();
     return completer.future;
   }
 
