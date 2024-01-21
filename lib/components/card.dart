@@ -228,7 +228,7 @@ class Card extends PositionComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    if (model.isClickable) _onTapUp(this);
+    if (!game.model.isDraggingCard && model.isClickable) _onTapUp(this);
   }
 
   @override
